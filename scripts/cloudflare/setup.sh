@@ -143,11 +143,64 @@ link_site_and_admin() {
   ok "Ask AI on $SITE_URL may talk to the admin"
 }
 
+# Opens a link in the browser where possible; always prints it too.
+open_link() { say "$1"; (open "$1" || xdg-open "$1" || cmd.exe /c start "" "$1") >/dev/null 2>&1 || true; }
+
+# A token form with exactly the two Access permissions ticked.
+ACCESS_TOKEN_LINK='https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22access%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22access_acct%22%2C%22type%22%3A%22edit%22%7D%5D&name=be-guided-access&accountId=*&zoneId=all'
+
 access() {
-  step "Choose who can open the admin (Cloudflare Access)"
+  step "Lock the admin so only you can open it (Cloudflare Access)"
   local team aud
   team="$(toml_val CF_ACCESS_TEAM_DOMAIN)"; aud="$(toml_val CF_ACCESS_AUD)"
   if [[ "$team" != *REPLACE* && "$aud" != *REPLACE* && -n "$aud" ]]; then ok "Already set up ($team)"; return 0; fi
+  [ -n "${ADMIN_URL:-}" ] || { fail "The admin's address isn't known yet. Run this again after the admin is online."; return 1; }
+  local email; email="$(toml_val BOOTSTRAP_OWNER_EMAIL)"; [[ "$email" == *REPLACE* ]] && email=""
+  email="$(ask 'Your email (only this email can open the admin; add more people later in the admin)' "$email")"
+  [[ "$email" =~ ^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$ ]] || { fail "That email doesn't look right. Run this again to retry."; return 1; }
+  set_toml BOOTSTRAP_OWNER_EMAIL "$email"
+
+  say "Cloudflare needs a one-time key (API token) to set up the lock for you."
+  say "Your browser will open Cloudflare's token page with the right boxes ticked."
+  say "There: select Continue to summary, then Create Token, then Copy."
+  say "(Type m instead of pressing Enter to do this step by hand in the dashboard.)"
+  local a; read -r -p "   Press Enter to open the page: " a
+  [ "${a:-}" = m ] && { access_by_hand; return $?; }
+  [ "${a:-}" = s ] && return 1
+  open_link "$ACCESS_TOKEN_LINK"
+
+  local token out rc tries=0
+  read -r -s -p "   Paste the token here (it stays hidden, and isn't saved): " token; echo
+  [ -n "$token" ] || { fail "No token pasted. Run this again to retry."; return 1; }
+  while :; do
+    tries=$((tries + 1))
+    out="$(CF_ACCESS_SETUP_TOKEN="$token" CF_ACCOUNT_ID="$(toml_val CF_ACCOUNT_ID)" ADMIN_HOST="$ADMIN_URL" \
+      OWNER_EMAILS="$email" BYPASS_PATHS="$(IFS=,; echo "${ACCESS_BYPASS_PATHS[*]}")" \
+      node scripts/cloudflare/access.mjs 2>"$LOG_DIR/access.log")"; rc=$?
+    [ $rc = 2 ] && [ $tries -lt 3 ] || break
+    warn "Cloudflare Zero Trust (which runs the lock) isn't switched on for your account yet."
+    say "Your browser will open it. Choose a team name and the Free plan (free for up to"
+    say "50 people; Cloudflare may ask for a card but doesn't charge for Free)."
+    open_link "https://one.dash.cloudflare.com/"
+    read -r -p "   When that's done, press Enter to try again: " a
+  done
+  unset token
+  case $rc in
+    0) ;;
+    3) fail "That token can't manage Access. Make it again from the page that opened, and keep both ticked permissions."; return 1 ;;
+    *) fail "The lock wasn't set up. Details: $LOG_DIR/access.log"; return 1 ;;
+  esac
+  team="$(printf '%s' "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).team))')"
+  aud="$(printf '%s' "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).aud))')"
+  set_toml CF_ACCESS_TEAM_DOMAIN "$team"
+  set_toml CF_ACCESS_AUD "$aud"
+  ok "Admin locked: only $email can open it (sign-in by a code sent to that email)"
+  ok "Left open for your AI: ${ACCESS_BYPASS_PATHS[*]}"
+  say "You can delete the be-guided-access token in Cloudflare now; it isn't needed again."
+}
+
+access_by_hand() {
+  local team aud
   say "This part is done in Cloudflare's dashboard. docs/DEPLOY.md (section 4) has"
   say "pictures-free, click-by-click steps. In short:"
   say "  1. dash.cloudflare.com → Workers & Pages → $WORKER_NAME → Settings →"

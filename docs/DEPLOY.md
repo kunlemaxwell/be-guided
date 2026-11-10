@@ -23,7 +23,7 @@ You need a Cloudflare account (free) and, for the admin to save guides in the cl
 | 4. Admin online | Builds the admin and uploads it as the Worker `be-guided-admin`. | The first time, Cloudflare may ask you to pick a workers.dev name for your account (for example *your-name*). |
 | 5. Site online | Builds the guide site from this computer's `content/` folder and uploads it to Pages as `be-guided`. | Nothing. |
 | 6. Connect | Tells the admin the site's address, so Ask AI on the site may use it. | Nothing. |
-| 7. Who can open the admin | Saves your Cloudflare Access details. | Set up Access in the dashboard (section 4), then paste two values. |
+| 7. Lock the admin | Locks the admin with Cloudflare Access so only your email can open it, and leaves the AI connector paths open. | Type your email. Your browser opens a Cloudflare token page with the right boxes ticked: create the token and paste it (hidden, not saved). See section 4. |
 | 8. GitHub | Saves which repository holds the guides, then asks for the GitHub access key. | Paste the key. It's hidden, and it goes straight to Cloudflare. |
 | 9. Ask AI | Asks for a Claude API key (optional). | Paste it, or skip. |
 | 10. Check | Checks both addresses and the AI connector answer, then prints them. | Note the addresses, including the **AI connector URL**. |
@@ -64,14 +64,28 @@ Readers can add the guide to Claude or ChatGPT and ask questions there. The guid
 - **No key and no extra cost.** It only reads the published, public guide pages (the same ones anyone can open), so it works as soon as the site and the admin are online. Nothing to switch on.
 - **The address** is the admin's address followed by `/api/v1/mcp`, for example `https://be-guided-admin.your-name.workers.dev/api/v1/mcp`. The setup prints it at the end, and the site's Connect your AI page shows it with a Copy button.
 - **It must be left open in Access:** add the Bypass for `api/v1/mcp` (section 4.3). Without it, Claude and ChatGPT get a sign-in page and say they can't connect.
-- **Try it yourself:** in Claude, open **Customize**, then **Connectors**, select **+ Add**, then **Add custom connector**, paste the address, choose **No sign in**, then **Add**. In a chat, switch it on under **+** › **Connectors** and ask "How do I set up taxes in Acme Books?".
+- **Try it yourself:** in Claude, open **Customize**, then **Connectors**, select **+ Add**, then **Add custom connector**, paste the address, choose **No sign in**, then **Add**. In a chat, switch it on under **+** › **Connectors** and ask "How do I install Be Guided?".
 - The site page says "Available once the guide is online" until the site is built with the admin's address (the setup does this automatically).
 
 ## 4. Choosing who can open the admin (Cloudflare Access)
 
 The admin is protected by Cloudflare Access. People sign in with their email, receiving a one-time code, and the admin only lets in people who are also listed under **Settings → People**.
 
-### 4.1 Switch Access on for the admin
+### 4.0 Automatic (what the setup does)
+
+Step 7 of the setup does all of this section for you:
+
+1. It asks for **your email**. Only this email can open the admin, and you become its first owner.
+2. Your browser opens Cloudflare's **Create Token** page with two permissions already ticked: **Access: Apps and Policies** and **Access: Organizations, Identity Providers, and Groups**, both **Edit**. Select **Continue to summary**, then **Create Token**, then **Copy**.
+3. Paste the token into the setup. It stays hidden and isn't saved anywhere.
+4. If Cloudflare Zero Trust isn't switched on yet, the setup opens it for you. Choose a team name and the **Free** plan, then press Enter in the setup.
+5. The setup adds sign-in by email code, locks the admin to your email, leaves the five paths in 4.3 open, and saves the team domain and Audience (AUD) tag in `wrangler.toml`.
+
+You can delete the `be-guided-access` token afterwards. Running the setup again finds what already exists and changes nothing.
+
+To do it by hand instead, type **m** at step 7 and follow 4.1 to 4.3.
+
+### 4.1 Switch Access on for the admin (by hand)
 
 1. Open **dash.cloudflare.com** and go to **Workers & Pages**, then **be-guided-admin**.
 2. Go to **Settings**, then **Domains & Routes**. On the **workers.dev** row, turn on **Cloudflare Access**. If asked, choose the **Free** Zero Trust plan, which covers up to 50 users.

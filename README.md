@@ -84,7 +84,7 @@ The setup walks you through every step in plain English and is safe to run again
 2. Creates the database (people, history, audit log) and file storage
 3. Puts the admin online
 4. Puts the guide site online
-5. Helps you lock the admin with Cloudflare Access (free for up to 50 people)
+5. Locks the admin to your email with Cloudflare Access (free for up to 50 people). You paste one Cloudflare token from a page that opens with the right boxes ticked
 6. Connects the admin to your GitHub repository
 7. Optionally switches on Ask AI
 8. Checks everything and prints your addresses
