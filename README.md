@@ -91,6 +91,25 @@ The setup walks you through every step in plain English and is safe to run again
 
 At the end you get three addresses: your **guide site**, your **admin**, and your **AI connector**. Details for each step, costs and troubleshooting: [docs/DEPLOY.md](docs/DEPLOY.md).
 
+### Or let your AI set it up
+
+If you use **Claude Code** or **Codex**, copy this and paste it into a new chat:
+
+```text
+Set up Be Guided for me from https://github.com/kunlemaxwell/be-guided.
+1. Check I have Node.js 20 or newer and Git. If not, tell me how to install them.
+2. Ask me for my GitHub username, then tell me to fork the repository to my account first.
+3. Clone my fork into a folder I choose, and run npm install.
+4. Run the checks: npm run typecheck && npm test.
+5. Tell me to run "npm run setup" in my own terminal (it asks me questions there),
+   and help me with each step it shows, in plain English, one step at a time.
+Never ask me to paste passwords, tokens or keys into this chat. Keys are typed
+into the setup window or Cloudflare's own pages only.
+When it finishes, give me my guide site, admin and AI connector addresses.
+```
+
+In **Claude** or **ChatGPT** on the web (no terminal), use the same text: the AI explains each step and you run the commands yourself.
+
 ---
 
 ## Use it with your AI
