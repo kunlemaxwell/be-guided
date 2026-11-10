@@ -34,6 +34,18 @@ export function splitStatements(sql: string): string[] {
 export async function migrate(db: SqlDatabase, migrations: Migration[], now: () => Date = () => new Date()): Promise<string[]> {
   await db.run('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)');
   const done = new Set((await db.all<{ name: string }>('SELECT name FROM schema_migrations')).map((r) => r.name));
+  // `wrangler d1 migrations apply` (run by `npm run setup`) records its work in
+  // d1_migrations as "0001_init.sql". Count those as done too, and copy them
+  // over, so the admin never re-runs a migration on start.
+  const wranglerTable = await db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'");
+  if (wranglerTable.length) {
+    for (const row of await db.all<{ name: string }>('SELECT name FROM d1_migrations')) {
+      const name = row.name.replace(/\.sql$/, '');
+      if (done.has(name) || !migrations.some((m) => m.name === name)) continue;
+      await db.run('INSERT OR IGNORE INTO schema_migrations (name, applied_at) VALUES (?, ?)', [name, now().toISOString()]);
+      done.add(name);
+    }
+  }
   const applied: string[] = [];
   for (const m of [...migrations].sort((a, b) => a.name.localeCompare(b.name))) {
     if (done.has(m.name)) continue;

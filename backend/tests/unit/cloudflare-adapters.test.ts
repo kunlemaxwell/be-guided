@@ -7,7 +7,7 @@ import { NoMediaStore } from '../../src/infrastructure/cloudflare/no-media-store
 import { GitHubMediaStore } from '../../src/infrastructure/cloudflare/github-media-store';
 import type { D1DatabaseLike, D1PreparedStatementLike, R2BucketLike } from '../../src/infrastructure/cloudflare/bindings';
 import { SqliteDatabase } from '../../src/infrastructure/node/sqlite-database';
-import { migrate } from '../../src/infrastructure/shared/migrator';
+import { migrate, splitStatements } from '../../src/infrastructure/shared/migrator';
 import { SqlActivityRepository, SqlPeopleRepository } from '../../src/infrastructure/shared/sql-repositories';
 import { readMigrations } from '../../src/local';
 import { AppError } from '../../src/domain/errors';
@@ -226,6 +226,18 @@ describe('D1Database + shared SQL repositories + migrator', () => {
     await activity.record({ id: 'a1', at: '2026-11-03T10:00:00.000Z', actorId: 'p1', actorName: 'Ada', area: 'pages', action: 'page.save', target: 't', summary: 's', details: { x: 1 }, correlationId: 'c' });
     const page = await activity.queryAudit({ pageNumber: 1, pageSize: 20, area: 'pages' });
     expect(page).toMatchObject({ totalCount: 1, items: [{ id: 'a1', details: { x: 1 } }] });
+  });
+
+  it('skips migrations that `wrangler d1 migrations apply` already ran', async () => {
+    const sqlite = new SqliteDatabase(':memory:');
+    const all = readMigrations();
+    await sqlite.run('CREATE TABLE d1_migrations (id INTEGER PRIMARY KEY, name TEXT, applied_at TEXT)');
+    for (const m of all.slice(0, 3)) {
+      await sqlite.batch(splitStatements(m.sql).map((sql) => ({ sql })));
+      await sqlite.run('INSERT INTO d1_migrations (name, applied_at) VALUES (?, ?)', [`${m.name}.sql`, 'x']);
+    }
+    expect(await migrate(sqlite, all)).toEqual(['0004_upload_tickets', '0005_automation']);
+    expect(await migrate(sqlite, all)).toEqual([]);
   });
 
   it('rolls back a failed batch (audit + revision are all-or-nothing)', async () => {

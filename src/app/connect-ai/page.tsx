@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 
 
 const EXAMPLES = [
-  'How do I set up taxes in Acme Books?',
-  'Walk me through creating an invoice, step by step.',
-  'What do I need to set up before I create a purchase order?',
-  'What gets posted to the accounts when an invoice is approved?',
-  'Which guides are there for Procurement?',
+  'How do I install Be Guided?',
+  'Walk me through connecting my GitHub repository, step by step.',
+  'How do I lock the admin with Cloudflare Access?',
+  'How do I add Be Guided to Claude or ChatGPT?',
+  'Which guides are there for the admin?',
 ];
 
 function Steps({ items }: { items: ReactNode[] }) {
@@ -108,7 +108,7 @@ export default function ConnectAiPage() {
           <h2 id="what-it-sees">What the AI can and can&apos;t see</h2>
           <ul>
             <li><strong>It can see</strong> the same guide pages anyone can open on this site: the steps, screenshots, troubleshooting tips and video links.</li>
-            <li><strong>It can&apos;t see</strong> draft pages, private pages or private products, and it never sees your company&apos;s own records in Acme Books or any other app.</li>
+            <li><strong>It can&apos;t see</strong> draft pages, private pages or private products, and it never sees your own records in any other app.</li>
             <li><strong>It can&apos;t change anything.</strong> The connector only reads the guide. It has no sign-in and no access to your account.</li>
             <li>Your questions are handled by Claude or ChatGPT under their own privacy terms. The guide only receives the search words and page names your assistant looks up, and doesn&apos;t keep them.</li>
           </ul>

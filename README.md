@@ -5,7 +5,7 @@
 Be Guided gives you a public guide site, a private admin, and connectors so Claude, ChatGPT and Codex can both **read** your guides and **write** them. You host it on your own Cloudflare account, free for most teams. You don't need an AI API key: you use your own Claude or ChatGPT subscription.
 
 > **See it working:** the Be Guided user guide is built with Be Guided itself.
-> Live demo: _link added after the first deployment_
+> Live demo: [be-guided.pages.dev](https://be-guided.pages.dev) (Be Guided's own user guide, written with Be Guided)
 
 ---
 

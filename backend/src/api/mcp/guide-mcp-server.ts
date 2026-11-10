@@ -24,7 +24,7 @@ import { AppError } from '../../domain/errors';
 export const MCP_SERVER_NAME = 'be-guided';
 
 const INSTRUCTIONS = [
-  'This server is the public user guide of Be Guided (step-by-step how-to pages for products such as Acme Books).',
+  'This server is the public user guide of Be Guided (step-by-step how-to pages for the products it documents).',
   'To answer a question: call `search` with the question in plain words, then `fetch` the best result id to read the whole page, and answer from that page.',
   'Quote the steps as written and always give the page link (url) so the reader can open it; step links point at the exact step.',
   'Use `list_guides` to see every product, module and page.',
@@ -93,7 +93,7 @@ export function createGuideMcpServer(deps: GuideMcpDeps): McpServer {
     {
       title: 'Search the guide',
       description:
-        'Search the Be Guided user guide (how-to pages for Acme Books and other products). Use it for any "how do I…", "where is…" or "what does … mean" question about these products. ' +
+        'Search the Be Guided user guide (how-to pages for the products it documents). Use it for any "how do I…", "where is…" or "what does … mean" question about these products. ' +
         'Pass the question or its key words in plain language, e.g. "set up taxes" or "create an invoice for a customer". ' +
         'Returns up to 8 pages, best first: id (give it to `fetch` to read the full page), title, url (link to the page, or to the matching step), breadcrumb (Product › Module) and a short snippet. ' +
         'An empty list means the guide does not cover it.',
