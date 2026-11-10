@@ -1,0 +1,12 @@
+{
+  "source": "raw/admin-product-link.png",
+  "output": "../images/admin-product-link.webp",
+  "scale": 2,
+  "crop": {
+    "x": 605,
+    "y": 203,
+    "w": 800,
+    "h": 133
+  },
+  "marks": []
+}

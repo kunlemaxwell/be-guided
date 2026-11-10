@@ -1,0 +1,33 @@
+{
+  "source": "raw/admin-requests.png",
+  "output": "../images/admin-requests.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 900
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 303,
+        "y": 196,
+        "w": 530,
+        "h": 21
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 303,
+        "y": 443,
+        "w": 533,
+        "h": 21
+      }
+    }
+  ]
+}

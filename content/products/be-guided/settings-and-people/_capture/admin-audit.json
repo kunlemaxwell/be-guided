@@ -1,0 +1,22 @@
+{
+  "source": "raw/admin-audit.png",
+  "output": "../images/admin-audit.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 420
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 280,
+        "y": 167,
+        "w": 1128,
+        "h": 108
+      }
+    }
+  ]
+}

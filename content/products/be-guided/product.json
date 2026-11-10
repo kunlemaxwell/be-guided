@@ -7,7 +7,24 @@
   "editorApproval": false,
   "source": {
     "repos": [
-      { "url": "kunlemaxwell/be-guided", "branch": "main", "paths": ["src", "admin/web/src", "backend/src", "scripts/cloudflare"] }
+      {
+        "url": "kunlemaxwell/be-guided",
+        "branch": "main",
+        "paths": [
+          "src",
+          "admin/web/src",
+          "backend/src",
+          "scripts/cloudflare"
+        ]
+      }
+    ]
+  },
+  "hero": {
+    "images": [
+      "writing-guides/images/admin-editor.webp",
+      "getting-started/images/admin-pages.webp",
+      "reading-the-guide/images/site-connect-ai.webp",
+      "writing-guides/images/admin-product.webp"
     ]
   }
 }

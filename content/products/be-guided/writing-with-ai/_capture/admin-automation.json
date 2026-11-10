@@ -1,0 +1,12 @@
+{
+  "source": "raw/admin-automation.png",
+  "output": "../images/admin-automation.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 800
+  },
+  "marks": []
+}

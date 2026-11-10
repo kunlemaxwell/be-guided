@@ -216,7 +216,7 @@ function fakeD1(sqlite: SqliteDatabase): D1DatabaseLike {
 describe('D1Database + shared SQL repositories + migrator', () => {
   it('migrates once and runs the same repositories as local', async () => {
     const db = new D1Database(fakeD1(new SqliteDatabase(':memory:')));
-    expect(await migrate(db, readMigrations())).toEqual(['0001_init', '0002_editor_connector', '0003_change_revisions', '0004_upload_tickets', '0005_automation']);
+    expect(await migrate(db, readMigrations())).toEqual(['0001_init', '0002_editor_connector', '0003_change_revisions', '0004_upload_tickets', '0005_automation', '0006_plan_time_zone']);
     expect(await migrate(db, readMigrations())).toEqual([]);
     const people = new SqlPeopleRepository(db);
     await people.insert({ id: 'p1', name: 'Ada', email: 'ADA@example.com', role: 'owner', active: true, createdAt: 'x', updatedAt: 'x' });
@@ -236,7 +236,7 @@ describe('D1Database + shared SQL repositories + migrator', () => {
       await sqlite.batch(splitStatements(m.sql).map((sql) => ({ sql })));
       await sqlite.run('INSERT INTO d1_migrations (name, applied_at) VALUES (?, ?)', [`${m.name}.sql`, 'x']);
     }
-    expect(await migrate(sqlite, all)).toEqual(['0004_upload_tickets', '0005_automation']);
+    expect(await migrate(sqlite, all)).toEqual(['0004_upload_tickets', '0005_automation', '0006_plan_time_zone']);
     expect(await migrate(sqlite, all)).toEqual([]);
   });
 

@@ -4,6 +4,7 @@ import editorSql from '../migrations/0002_editor_connector.sql';
 import revisionsSql from '../migrations/0003_change_revisions.sql';
 import ticketsSql from '../migrations/0004_upload_tickets.sql';
 import automationSql from '../migrations/0005_automation.sql';
+import planTimeZoneSql from '../migrations/0006_plan_time_zone.sql';
 import { createApi } from './api/app';
 import type { AppEnv, ChatEnv, McpEnv } from './api/context';
 import { buildChatApp, CHAT_PATH } from './chat-worker';
@@ -79,7 +80,7 @@ function build(env: WorkerEnv): { app: OpenAPIHono<AppEnv>; ready: Promise<unkno
         ? new CloudflareAccessSignInList({ accountId: config.CF_ACCOUNT_ID, apiToken: config.CF_API_TOKEN, audience: config.CF_ACCESS_AUD })
         : null,
   });
-  const ready = migrate(db, [{ name: '0001_init', sql: initSql }, { name: '0002_editor_connector', sql: editorSql }, { name: '0003_change_revisions', sql: revisionsSql }, { name: '0004_upload_tickets', sql: ticketsSql }, { name: '0005_automation', sql: automationSql }]);
+  const ready = migrate(db, [{ name: '0001_init', sql: initSql }, { name: '0002_editor_connector', sql: editorSql }, { name: '0003_change_revisions', sql: revisionsSql }, { name: '0004_upload_tickets', sql: ticketsSql }, { name: '0005_automation', sql: automationSql }, { name: '0006_plan_time_zone', sql: planTimeZoneSql }]);
   return { app: createApi(services), ready, services };
 }
 

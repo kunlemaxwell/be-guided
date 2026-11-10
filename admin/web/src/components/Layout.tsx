@@ -52,7 +52,7 @@ export function Layout() {
         <div className="sidebar__head">
           <div className="brand">
             <span className="brand__mark" aria-hidden="true">
-              P
+              B
             </span>
             <span className="brand__text">
               <strong>Be Guided</strong>

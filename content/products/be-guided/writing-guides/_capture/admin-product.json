@@ -1,0 +1,46 @@
+{
+  "source": "raw/admin-product.png",
+  "output": "../images/admin-product.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 1000
+  },
+  "marks": [
+    {
+      "n": 1,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 625,
+        "y": 532,
+        "w": 42,
+        "h": 24
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 625,
+        "y": 590,
+        "w": 42,
+        "h": 24
+      }
+    },
+    {
+      "n": 3,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 625,
+        "y": 649,
+        "w": 71,
+        "h": 20
+      }
+    }
+  ]
+}

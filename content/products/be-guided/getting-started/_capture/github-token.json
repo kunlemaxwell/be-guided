@@ -1,0 +1,10 @@
+{
+  "source": "raw/github-token.png",
+  "output": "../images/github-token.webp",
+  "scale": 2,
+  "crop": { "x": 0, "y": 0, "w": 800, "h": 600 },
+  "marks": [
+    { "n": 1, "box": { "x": 12, "y": 178, "w": 640, "h": 162 } },
+    { "n": 2, "pad": 4, "box": { "x": 562, "y": 546, "w": 170, "h": 30 } }
+  ]
+}

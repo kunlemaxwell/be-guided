@@ -13,7 +13,7 @@ It runs on your own computer. Only its calls to your guide's API leave the machi
 
 1. Unzip `be-guided-studio.zip`.
 2. Open Terminal in that folder and run: `bash install.sh`
-3. When asked, press Return for the usual connector address, then paste your personal key (an owner makes one in the admin: Settings › Editor connector).
+3. When asked, paste your editor connector address (your admin address followed by `/api/v1/editor`), then your personal key (an owner makes one in the admin: Settings › Editor connector).
 
 The installer needs Node.js 20 or newer. It adds the Studio to Claude Code and Codex if you have them.
 
@@ -23,7 +23,7 @@ The installer needs Node.js 20 or newer. It adds the Studio to Claude Code and C
 | --- | --- |
 | Your browser | `node ~/.be-guided/studio/bin/be-guided-studio.mjs open` |
 | Claude Desktop or claude.ai | Ask "open Be Guided Studio"; the app shows inside the chat |
-| Claude Code or Codex | Ask "run the queued Be Guided checks" or "set up a daily 8 AM check for Acme Books" |
+| Claude Code or Codex | Ask "run the queued Be Guided checks" or "set up a daily 8 AM check for my product" |
 | By itself every 15 minutes (Mac) | `node ~/.be-guided/studio/bin/be-guided-studio.mjs schedule --install` |
 
 ## How a check runs

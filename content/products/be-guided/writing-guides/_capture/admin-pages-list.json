@@ -1,0 +1,33 @@
+{
+  "source": "raw/admin-pages-list.png",
+  "output": "../images/admin-pages-list.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 640
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 280,
+        "y": 234,
+        "w": 545,
+        "h": 32
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 1291,
+        "y": 368,
+        "w": 96,
+        "h": 30
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "source": "raw/admin-settings-appearance.png",
+  "output": "../images/admin-settings-appearance.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 800
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 280,
+        "y": 237,
+        "w": 1128,
+        "h": 45
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "tr",
+      "box": {
+        "x": 1287,
+        "y": 176,
+        "w": 106,
+        "h": 30
+      }
+    }
+  ]
+}

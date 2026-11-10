@@ -2855,7 +2855,7 @@ button.nav-link{border:0;background:none;font:inherit;width:100%;cursor:pointer}
   <aside class="sidebar" aria-label="Studio menu">
     <div class="sidebar__head">
       <div class="brand">
-        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__mark" aria-hidden="true">B</span>
         <span class="brand__text"><strong>Be Guided</strong><small>Studio</small></span>
       </div>
     </div>
@@ -2903,7 +2903,8 @@ const TABS = [
   { id: 'feedback', label: 'Reader feedback', icon: 'M7 11v9H4v-9z M7 11l4-7a2 2 0 0 1 2.5 2.6L12.5 10H19a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.8 20H7', lede: 'Every "Was this helpful?" vote from the public guide: thumbs up and down per page, comments, and the email when a reader left one.' },
 ];
 const HOURS = [1, 2, 4, 6, 8, 12];
-const ZONES = ['Africa/Lagos', 'Europe/London', 'UTC', 'America/New_York', 'Asia/Dubai', 'Africa/Johannesburg', 'Africa/Nairobi', 'Asia/Kolkata'];
+const LOCAL_ZONE = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { return 'UTC'; } })();
+const ZONES = [...new Set([LOCAL_ZONE, 'UTC', 'Europe/London', 'Africa/Lagos', 'America/New_York', 'Asia/Dubai', 'Africa/Johannesburg', 'Africa/Nairobi', 'Asia/Kolkata'])];
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -3286,7 +3287,7 @@ function runNow(btn, product) {
 }
 
 function planDialog(plan) {
-  const p = plan || { name: '', autoCheck: true, frequency: { kind: 'daily', at: '08:00' }, timeZone: 'Africa/Lagos', autoUpdate: false, requireApproval: true, contentMode: 'text+screens' };
+  const p = plan || { name: '', autoCheck: true, frequency: { kind: 'daily', at: '08:00' }, timeZone: LOCAL_ZONE, autoUpdate: false, requireApproval: true, contentMode: 'text+screens' };
   const f = p.frequency;
   const zones = ZONES.includes(p.timeZone) ? ZONES : [p.timeZone, ...ZONES];
   const dlg = freshDialog();

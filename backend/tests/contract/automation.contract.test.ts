@@ -117,16 +117,16 @@ describe.skipIf(!IN_PROCESS)('Automatic checks (owner, local)', () => {
   });
 
   it('TC-AUTO-008 end to end: plan → clock → queued check → claim with skills → report → choose per change and mode → refresh requests → applied → done', async () => {
-    // A plan: every day 08:00 Lagos, auto update with approval, text + screenshots.
+    // A ready-made plan: every day 08:00 UTC, auto update with approval, text + screenshots.
     data(await tool(h.api, 'assign_update_plan', { planId: 'plan-daily-8am', products: ['acme-books'] }));
     let o = data<Overview>(await tool(h.api, 'automation_overview'));
-    expect(o.products.find((p) => p.product === 'acme-books')!.nextRunAt).toBe('2026-11-05T07:00:00.000Z');
+    expect(o.products.find((p) => p.product === 'acme-books')!.nextRunAt).toBe('2026-11-05T08:00:00.000Z');
 
-    // 07:59 Lagos: not yet.
-    now = new Date('2026-11-05T06:59:00Z');
+    // 07:59 UTC: not yet.
+    now = new Date('2026-11-05T07:59:00Z');
     expect(await h.local!.services.automation.tick()).toEqual([]);
-    // 08:05 Lagos: due, queued once (a second tick does not queue again).
-    now = new Date('2026-11-05T07:05:00Z');
+    // 08:05 UTC: due, queued once (a second tick does not queue again).
+    now = new Date('2026-11-05T08:05:00Z');
     const queued = await h.local!.services.automation.tick();
     expect(queued).toHaveLength(1);
     expect(await h.local!.services.automation.tick()).toEqual([]);
@@ -203,10 +203,10 @@ describe.skipIf(!IN_PROCESS)('Automatic checks (owner, local)', () => {
 
     // Next day's slot is tomorrow 08:00; the clock queues it then.
     o = data<Overview>(await tool(h.api, 'automation_overview'));
-    expect(o.products.find((p) => p.product === 'acme-books')!.nextRunAt).toBe('2026-11-06T07:00:00.000Z');
+    expect(o.products.find((p) => p.product === 'acme-books')!.nextRunAt).toBe('2026-11-06T08:00:00.000Z');
     now = new Date('2026-11-05T20:00:00Z');
     expect(await h.local!.services.automation.tick()).toEqual([]);
-    now = new Date('2026-11-06T07:00:00Z');
+    now = new Date('2026-11-06T08:00:00Z');
     expect(await h.local!.services.automation.tick()).toHaveLength(1);
 
     // Every step is in the audit log under its own area.

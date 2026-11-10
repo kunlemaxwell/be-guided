@@ -1,0 +1,24 @@
+{
+  "source": "raw/site-copy-link.png",
+  "output": "../images/site-copy-link.webp",
+  "scale": 2,
+  "crop": {
+    "x": 0,
+    "y": 60,
+    "w": 1440,
+    "h": 460
+  },
+  "marks": [
+    {
+      "n": 1,
+      "outline": false,
+      "badge": "r",
+      "box": {
+        "x": 144,
+        "y": 416,
+        "w": 272,
+        "h": 40
+      }
+    }
+  ]
+}

@@ -184,19 +184,34 @@ access() {
     open_link "https://one.dash.cloudflare.com/"
     read -r -p "   When that's done, press Enter to try again: " a
   done
-  unset token
   case $rc in
     0) ;;
-    3) fail "That token can't manage Access. Make it again from the page that opened, and keep both ticked permissions."; return 1 ;;
-    *) fail "The lock wasn't set up. Details: $LOG_DIR/access.log"; return 1 ;;
+    3) unset token; fail "That token can't manage Access. Make it again from the page that opened, and keep both ticked permissions."; return 1 ;;
+    *) unset token; fail "The lock wasn't set up. Details: $LOG_DIR/access.log"; return 1 ;;
   esac
+  # Optional: keep the token in Cloudflare (as a Worker secret) so adding someone
+  # under Settings > People also lets them through the lock.
+  local keep; keep="$(ask 'Let the admin add people to the lock for you, so you only add them in one place? (Y/n)' Y)"
+  if [[ "$keep" =~ ^[Yy] ]]; then
+    if printf '%s' "$token" | wr secret put CF_API_TOKEN > "$LOG_DIR/access-secret.log" 2>&1; then
+      ok "People you add in the admin can sign in straight away"
+      KEEP_ACCESS_TOKEN=1
+    else
+      warn "Couldn't save it (details: $LOG_DIR/access-secret.log). Add people to the lock in Cloudflare instead."
+    fi
+  fi
+  unset token
   team="$(printf '%s' "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).team))')"
   aud="$(printf '%s' "$out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).aud))')"
   set_toml CF_ACCESS_TEAM_DOMAIN "$team"
   set_toml CF_ACCESS_AUD "$aud"
   ok "Admin locked: only $email can open it (sign-in by a code sent to that email)"
   ok "Left open for your AI: ${ACCESS_BYPASS_PATHS[*]}"
-  say "You can delete the be-guided-access token in Cloudflare now; it isn't needed again."
+  if [ "${KEEP_ACCESS_TOKEN:-0}" = 1 ]; then
+    say "Keep the be-guided-access token in Cloudflare: the admin uses it to add people."
+  else
+    say "You can delete the be-guided-access token in Cloudflare now; it isn't needed again."
+  fi
 }
 
 access_by_hand() {

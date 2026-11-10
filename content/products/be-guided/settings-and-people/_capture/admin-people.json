@@ -1,0 +1,33 @@
+{
+  "source": "raw/admin-people.png",
+  "output": "../images/admin-people.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 700
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 1035,
+        "y": 325,
+        "w": 131,
+        "h": 37
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "l",
+      "box": {
+        "x": 1305,
+        "y": 635,
+        "w": 70,
+        "h": 30
+      }
+    }
+  ]
+}

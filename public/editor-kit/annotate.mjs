@@ -16,7 +16,9 @@
 //     { "n": 1, "box": { "x": 337, "y": 212, "w": 242, "h": 60 } },
 //     { "box": { ... } },                   // box without a number = highlight only
 //     { "n": 3, "pad": 0, "box": { ... } },   // pad: space around the box (default 6)
-//     { "n": 4, "badge": "l", "box": { ... } } // badge: tr (default) | tl | l | r — where the number sits
+//     { "n": 4, "badge": "l", "box": { ... } }, // badge: tr (default) | tl | l | r — where the number sits
+//     { "n": 5, "outline": false, "badge": "l", "box": { ... } } // number only, no box
+//   Boxes are always outlines, never filled. Mix styles: box + number, number only, or no marks.
 //   ]
 // }
 //
@@ -54,6 +56,7 @@ async function render(specFile) {
     return {
       n: m.n,
       badge: m.badge ?? 'tr',
+      outline: m.outline !== false,
       x: (m.box.x - crop.x - pad) * k,
       y: (m.box.y - crop.y - pad) * k,
       w: (m.box.w + pad * 2) * k,
@@ -71,6 +74,7 @@ async function render(specFile) {
     ? `<mask id="m"><rect width="${W}" height="${H}" fill="white"/>${holes}</mask><rect width="${W}" height="${H}" fill="rgba(15,23,42,0.38)" mask="url(#m)"/>`
     : '';
   const frames = boxes
+    .filter((b) => b.outline)
     .map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="none" stroke="${ACCENT}" stroke-width="${sw}"/>`)
     .join('');
   const badges = boxes

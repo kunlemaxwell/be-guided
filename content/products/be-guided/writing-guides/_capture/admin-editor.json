@@ -1,0 +1,44 @@
+{
+  "source": "raw/admin-editor.png",
+  "output": "../images/admin-editor.webp",
+  "scale": 2,
+  "crop": {
+    "x": 250,
+    "y": 60,
+    "w": 1190,
+    "h": 720
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 281,
+        "y": 288,
+        "w": 746,
+        "h": 83
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "tr",
+      "box": {
+        "x": 1346,
+        "y": 137,
+        "w": 62,
+        "h": 37
+      }
+    },
+    {
+      "n": 3,
+      "outline": false,
+      "badge": "tl",
+      "box": {
+        "x": 907,
+        "y": 137,
+        "w": 130,
+        "h": 37
+      }
+    }
+  ]
+}

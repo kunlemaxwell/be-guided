@@ -62,6 +62,7 @@ async function render(specFile) {
     return {
       n: m.n,
       badge: m.badge ?? 'tr',
+      outline: m.outline !== false,
       x: (m.box.x - crop.x - pad) * k,
       y: (m.box.y - crop.y - pad) * k,
       w: (m.box.w + pad * 2) * k,
@@ -79,6 +80,7 @@ async function render(specFile) {
     ? `<mask id="m"><rect width="${W}" height="${H}" fill="white"/>${holes}</mask><rect width="${W}" height="${H}" fill="rgba(15,23,42,0.38)" mask="url(#m)"/>`
     : '';
   const frames = boxes
+    .filter((b) => b.outline)
     .map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="none" stroke="${ACCENT}" stroke-width="${sw}"/>`)
     .join('');
   const badges = boxes

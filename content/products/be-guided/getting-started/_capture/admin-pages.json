@@ -1,0 +1,33 @@
+{
+  "source": "raw/admin-pages.png",
+  "output": "../images/admin-pages.webp",
+  "scale": 2,
+  "crop": {
+    "x": 0,
+    "y": 0,
+    "w": 1440,
+    "h": 640
+  },
+  "marks": [
+    {
+      "n": 1,
+      "box": {
+        "x": 22,
+        "y": 582,
+        "w": 203,
+        "h": 38
+      }
+    },
+    {
+      "n": 2,
+      "outline": false,
+      "badge": "r",
+      "box": {
+        "x": 52,
+        "y": 103,
+        "w": 43,
+        "h": 23
+      }
+    }
+  ]
+}
