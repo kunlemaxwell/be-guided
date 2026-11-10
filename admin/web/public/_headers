@@ -1,0 +1,20 @@
+# Security headers for the admin web app on Cloudflare (Workers static assets).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# BEGIN studio (written by scripts/build-studio.mjs)
+/studio.html
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-v+/lQYNuY+9YK5LvepVA8Sbz4auJLOaEf2WDjL9v1BI='; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'
+  X-Frame-Options: SAMEORIGIN
+/studio
+  ! Content-Security-Policy
+  ! X-Frame-Options
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-v+/lQYNuY+9YK5LvepVA8Sbz4auJLOaEf2WDjL9v1BI='; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'self'; base-uri 'none'; form-action 'self'
+  X-Frame-Options: SAMEORIGIN
+# END studio

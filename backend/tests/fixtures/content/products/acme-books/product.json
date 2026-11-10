@@ -1,0 +1,9 @@
+{
+  "name": "Acme Books",
+  "summary": "Sample accounting app used by the tests: sales, settings and procurement.",
+  "visibility": "public",
+  "status": "available",
+  "order": 1,
+  "source": { "repos": [{ "url": "your-org/your-app", "branch": "main", "paths": ["src/app"] }] },
+  "environments": { "local": { "appUrl": "http://localhost:3000" } }
+}

@@ -1,0 +1,146 @@
+/*
+ * Page layouts (src/lib/layouts.ts). html[data-layout] names the preset;
+ * html[data-l-*] are its five options (the owner can change each one):
+ *   data-l-nav     left | right | tabs (module tabs + left menu) | top (module tabs only)
+ *   data-l-toc     right | inline | hidden
+ *   data-l-width   narrow | normal | wide
+ *   data-l-density comfortable | compact
+ *   data-l-steps   list | cards | split | slides
+ * Layout = structure; the theme (themes.css) = colours and type. Any layout works with any theme.
+ */
+
+html[data-layout] { --l-navw: 248px; --l-tocw: 200px; --l-main: 740px; }
+html[data-layout][data-nav='collapsed'] { --l-navw: 40px; }
+html[data-layout][data-l-toc='inline'], html[data-layout][data-l-toc='hidden'] { --l-tocw: 0px; }
+html[data-layout][data-l-width='narrow'] { --l-main: 680px; }
+html[data-layout][data-l-width='wide'] { --l-main: 980px; }
+html[data-layout][data-l-width='wide'] .container--wide { max-width: 1560px; }
+html[data-layout][data-l-width='narrow'] .container--wide { max-width: 1160px; }
+
+.doc-main { max-width: var(--l-main, 740px); }
+
+/* ── Module tabs (nav = tabs | top) ─────────────────────────────────────── */
+.doc-tabs, .doc-modmenu { display: none; }
+html[data-l-nav='tabs'] .doc-tabs, html[data-l-nav='top'] .doc-tabs {
+  display: flex; gap: 2px; overflow-x: auto; scrollbar-width: thin;
+  border-bottom: var(--line-w, 1px) solid var(--line); margin: 0 -4px; padding: 0 4px;
+  position: sticky; top: 0; z-index: 5; background: var(--bg);
+}
+.doc-tabs a {
+  flex: none; padding: 13px 14px 11px; border-bottom: 2px solid transparent; margin-bottom: calc(-1 * var(--line-w, 1px));
+  color: var(--muted); text-decoration: none; white-space: nowrap; font-size: 14px; font-weight: 550;
+}
+.doc-tabs a:hover { color: var(--fg); }
+.doc-tabs a[aria-current='true'] { color: var(--fg); border-bottom-color: var(--accent); }
+
+/* nav = top: no side menu; the module's pages sit in a small menu above the title. */
+html[data-l-nav='top'] .doc-nav { display: none; }
+html[data-l-nav='top'] .doc-modmenu { display: block; margin: 0 0 18px; font-size: 14px; }
+.doc-modmenu summary { cursor: pointer; color: var(--muted); font-weight: 600; list-style: none; display: inline-flex; gap: 6px; align-items: center; padding: 6px 12px; border: var(--line-w, 1px) solid var(--line); border-radius: 999px; }
+.doc-modmenu summary::-webkit-details-marker { display: none; }
+.doc-modmenu summary::after { content: '▾'; font-size: 11px; }
+.doc-modmenu[open] summary::after { content: '▴'; }
+.doc-modmenu ol { margin: 10px 0 0; padding: 12px 12px 12px 34px; border: var(--line-w, 1px) solid var(--line); border-radius: var(--radius-sm); background: var(--surface); columns: 2 240px; column-gap: 28px; }
+.doc-modmenu li { padding: 3px 0; break-inside: avoid; }
+.doc-modmenu a { text-decoration: none; color: var(--fg-2); }
+.doc-modmenu a[aria-current='page'] { color: var(--accent); font-weight: 600; }
+
+/* ── Columns (desktop and tablet) ───────────────────────────────────────── */
+@media (min-width: 761px) {
+  html[data-layout][data-l-nav='left'][data-l-toc] .doc-layout,
+  html[data-layout][data-l-nav='tabs'][data-l-toc] .doc-layout { grid-template-columns: var(--l-navw) minmax(0, 1fr) var(--l-tocw); }
+  html[data-layout][data-l-nav='right'][data-l-toc] .doc-layout { grid-template-columns: minmax(0, 1fr) var(--l-tocw) var(--l-navw); }
+  html[data-layout][data-l-nav='right'] .doc-main { grid-column: 1; grid-row: 1; }
+  html[data-layout][data-l-nav='right'] .doc-toc { grid-column: 2; grid-row: 1; }
+  html[data-layout][data-l-nav='right'] .doc-nav { grid-column: 3; grid-row: 1; padding-left: 20px; border-left: var(--line-w, 1px) solid var(--line); }
+  html[data-layout][data-l-nav='top'][data-l-toc] .doc-layout { grid-template-columns: minmax(0, 1fr) var(--l-tocw); }
+  /* With nothing beside it, the reading column sits in the middle. */
+  html[data-layout][data-l-nav='top'] .doc-main { justify-self: center; width: 100%; }
+  html[data-layout][data-l-toc='inline'] .doc-layout, html[data-layout][data-l-toc='hidden'] .doc-layout { column-gap: 48px; }
+}
+@media (max-width: 1100px) {
+  html[data-layout] { --l-tocw: 0px; --l-navw: 220px; }
+  html[data-layout][data-nav='collapsed'] { --l-navw: 40px; }
+}
+
+/* ── "On this page" ─────────────────────────────────────────────────────── */
+html[data-l-toc='inline'] .doc-toc, html[data-l-toc='hidden'] .doc-toc { display: none; }
+html[data-l-toc='inline'] .toc-inline { display: block; }
+html[data-layout][data-l-toc='hidden'] .toc-inline { display: none; }
+
+/* ── Density ────────────────────────────────────────────────────────────── */
+html[data-l-density='compact'] { --base-size: 15px; --h1-size: 2rem; }
+html[data-l-density='compact'] .doc-main { padding-top: 20px; line-height: 1.55; }
+html[data-l-density='compact'] .doc-nav { font-size: 13px; padding-top: 20px; }
+html[data-l-density='compact'] .doc-nav a { padding: 4px 8px; }
+html[data-l-density='compact'] .step__body { padding-bottom: 16px; }
+html[data-l-density='compact'] .doc-lead { font-size: 16px; margin-bottom: 10px; }
+html[data-l-density='compact'] .prereqs { padding: 12px 14px; }
+html[data-l-density='compact'] table { font-size: 13.5px; }
+html[data-l-density='compact'] th, html[data-l-density='compact'] td { padding: 6px 10px; }
+
+/* ── Steps: cards ───────────────────────────────────────────────────────── */
+html[data-l-steps='cards'] .step { column-gap: 14px; }
+html[data-l-steps='cards'] .step__line { display: none; }
+html[data-l-steps='cards'] .step__body {
+  background: var(--surface); border: var(--line-w, 1px) solid var(--line); border-radius: var(--radius);
+  padding: 18px 20px 6px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+html[data-l-steps='cards'] .step__num { margin-top: 18px; }
+
+/* ── Steps: split (what to do | the screen), wide screens only ─────────── */
+@media (min-width: 1000px) {
+  html[data-l-steps='split'] .doc-main { max-width: max(var(--l-main), 1040px); }
+  html[data-l-steps='split'] .step__body { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr); column-gap: 28px; align-items: start; }
+  html[data-l-steps='split'] .step__body > * { grid-column: 1; }
+  /* The step's first screenshot goes on the right, beside all of the step's text; any later ones stay in the text column. */
+  html[data-l-steps='split'] .step__body > p:has(.shot):not(p:has(.shot) ~ p) { grid-column: 2; grid-row: 1 / span 40; margin-top: 0; position: sticky; top: 64px; }
+}
+
+/* ── Steps: slides (one step per screen, screenshot first) ─────────────── */
+html[data-l-steps='slides'] { scroll-snap-type: y proximity; }
+html[data-l-steps='slides'] .step { min-height: min(86vh, 900px); scroll-snap-align: start; scroll-margin-top: 56px; grid-template-columns: minmax(0, 1fr); }
+html[data-l-steps='slides'] .step__rail { display: none; }
+html[data-l-steps='slides'] .step__body {
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  background: var(--surface); border: var(--line-w, 1px) solid var(--line); border-radius: var(--radius);
+  padding: 28px 32px 22px; margin-bottom: 24px;
+}
+html[data-l-steps='slides'] .step__title { order: -2; font-size: calc(var(--h4-size, 17px) + 6px) !important; }
+html[data-l-steps='slides'] .step__title::before { content: 'Step ' counter(step) ' · '; color: var(--accent); }
+html[data-l-steps='slides'] .step__body > p:has(.shot):not(p:has(.shot) ~ p) { order: -1; margin: 6px 0 12px; }
+@media (prefers-reduced-motion: reduce) { html[data-l-steps='slides'] { scroll-snap-type: none; } }
+
+/* ── Playbook: the module menu is a numbered checklist ──────────────────── */
+html[data-layout='playbook'] .doc-nav__group:first-child { counter-reset: pb; }
+html[data-layout='playbook'] .doc-nav__group:first-child a { counter-increment: pb; display: flex; gap: 10px; align-items: flex-start; }
+html[data-layout='playbook'] .doc-nav__group:first-child a::before {
+  content: counter(pb); flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 11.5px; font-weight: 700; border: var(--line-w, 1px) solid var(--line-2); color: var(--muted); background: var(--bg);
+}
+html[data-layout='playbook'] .doc-nav__group:first-child a[aria-current='page']::before { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+/* Pages before this one count as done. */
+html[data-layout='playbook'] .doc-nav__group:first-child a:has(~ a[aria-current='page'])::before { content: '✓'; color: var(--accent); border-color: var(--accent); }
+html[data-layout='playbook'] .doc-nav__group:first-child .doc-nav__section ~ a:has(~ .doc-nav__section ~ a[aria-current='page'])::before { content: '✓'; }
+
+/* ── Atlas: a docs-site feel ────────────────────────────────────────────── */
+html[data-layout='atlas'] .doc-nav__label { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--fg); }
+html[data-layout='atlas'] .doc-nav a[aria-current='page'] { background: var(--accent-soft); color: var(--accent); }
+html[data-layout='atlas'] .doc-toc a[href] { border-left-width: 2px; }
+
+/* ── Notebook: a calm long-form column ──────────────────────────────────── */
+html[data-layout='notebook'] .doc-main { font-size: calc(var(--base-size, 16px) + 1px); line-height: 1.75; }
+html[data-layout='notebook'] .doc-title { text-align: left; letter-spacing: -0.02em; }
+
+/* ── Portal: centred and roomy ──────────────────────────────────────────── */
+html[data-layout='portal'] .doc-article { background: var(--surface); border: var(--line-w, 1px) solid var(--line); border-radius: var(--radius); padding: 36px 40px; margin-top: 24px; }
+@media (max-width: 760px) { html[data-layout='portal'] .doc-article { padding: 22px 18px; } }
+
+/* ── Ledger: dense reference ────────────────────────────────────────────── */
+html[data-layout='ledger'] .doc-title { font-size: 1.9rem; }
+html[data-layout='ledger'] .doc-article h2 { border-bottom: var(--line-w, 1px) solid var(--line); padding-bottom: 6px; }
+
+@media print {
+  .doc-tabs, .doc-modmenu { display: none !important; }
+  html[data-l-steps] .step { min-height: 0; }
+}

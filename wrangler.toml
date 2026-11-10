@@ -1,0 +1,60 @@
+# Be Guided — admin + API on Cloudflare Workers.
+# The public site is a separate static build (npm run build → out/) on Cloudflare Pages.
+# Secrets are NOT in this file: set them with `wrangler secret put <NAME>` (see .env.example).
+# `npm run setup` fills in every REPLACE value below for your own Cloudflare account (docs/DEPLOY.md).
+
+name = "be-guided-admin"
+main = "backend/src/worker.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Migrations are bundled as text and applied by backend/src/infrastructure/shared/migrator.ts
+# on the first request (they are also valid for `wrangler d1 migrations apply`).
+[[rules]]
+type = "Text"
+globs = ["**/*.sql"]
+fallthrough = true
+
+# Admin web app (npm run build:admin). /api/* (including /api/v1/chat and
+# /api/v1/mcp) goes to the Worker first; every
+# other path is the single-page app.
+[assets]
+directory = "admin/web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+# Automatic checks: every 15 minutes the Worker queues the checks whose time has come.
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "be-guided"
+database_id = "REPLACE_WITH_DATABASE_ID"   # npm run setup creates it
+migrations_dir = "backend/migrations"
+
+# Upload storage. "Set up Cloudflare" switches these three lines on once R2 is
+# enabled for the account; until then uploads in the cloud admin are refused.
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "be-guided-media"            # wrangler r2 bucket create be-guided-media
+
+[vars]
+SITE_URL = "https://REPLACE-site.pages.dev"
+CHAT_ALLOWED_ORIGINS = "https://REPLACE-site.pages.dev"
+CF_ACCESS_TEAM_DOMAIN = "https://REPLACE-team.cloudflareaccess.com"
+CF_ACCESS_AUD = "REPLACE_WITH_ACCESS_AUD"
+GITHUB_REPO = "REPLACE_OWNER/REPLACE_REPO"
+GITHUB_BRANCH = "main"
+GITHUB_CONTENT_DIR = "content"
+CHAT_MODEL = "claude-opus-5-5"
+CHAT_RATE_LIMIT_PER_MINUTE = "10"
+# "Connect your AI" (/api/v1/mcp): needs only SITE_URL plus these two; no secrets.
+MCP_ALLOWED_ORIGINS = "https://claude.ai,https://chatgpt.com"
+MCP_RATE_LIMIT_PER_MINUTE = "120"
+UPLOAD_IMAGE_MAX_MB = "15"
+UPLOAD_VIDEO_MAX_MB = "95"
+# BOOTSTRAP_OWNER_EMAIL = "you@example.com"   (npm run setup asks for it)
+
+# Secrets (wrangler secret put …): GITHUB_TOKEN, ANTHROPIC_API_KEY, PAGES_DEPLOY_HOOK_URL

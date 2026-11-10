@@ -1,0 +1,12 @@
+{
+  "name": "be-guided-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Be Guided Studio on your own computer: update plans, the check log, writing and QA skills and reader feedback, for Claude (Code and Desktop) and Codex.",
+  "type": "module",
+  "bin": { "be-guided-studio": "bin/be-guided-studio.mjs" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1"
+  }
+}

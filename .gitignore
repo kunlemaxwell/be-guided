@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.env
+.env.local
+.env.*.local
+.DS_Store
+.wrangler/
+admin/.secrets/
+.admin/
+_capture-frames/
+admin/web/dist/
+
+# Cloudflare deploy
+.dev.vars
+scripts/cloudflare/settings.env
+# Generated copies of content images (scripts/sync-assets.mjs)
+public/_content/
+# Raw, unblurred screen captures. Never commit or publish these.
+content/**/_capture/raw/
+
+# Files waiting to be deleted
+_to_delete/
+admin/web/dist-chat/

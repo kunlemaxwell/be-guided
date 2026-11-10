@@ -1,0 +1,19 @@
+{
+  "siteName": "Be Guided",
+  "theme": "ink",
+  "defaultMode": "dark",
+  "video": {
+    "display": "expanded"
+  },
+  "themeCustom": {
+    "colors": {
+      "light": {
+        "accent": "#711fff",
+        "line": "#f5f3fb"
+      }
+    }
+  },
+  "layout": {
+    "id": "standard"
+  }
+}

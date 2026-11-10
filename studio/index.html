@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Be Guided Studio</title>
+<style>
+/* The admin's own stylesheet (admin/web/src/styles.css), inlined by scripts/build-studio.mjs so the Studio looks exactly like the admin. */
+/*ADMIN_STYLES*/
+/* Studio-only additions, built from the admin's tokens. */
+[hidden]{display:none!important}
+html:has(body.embedded),body.embedded{background:transparent}
+.studio-solo{max-width:1180px;margin:0 auto;padding:18px 18px 40px;display:grid;gap:18px}
+body.in-admin .studio-solo{padding:0;max-width:none}
+body.embedded .notices{position:static;max-width:none}
+.studio-tabs{overflow-x:auto;flex-wrap:nowrap}
+.studio-tabs .tab{white-space:nowrap}
+.notices:empty{display:none}
+#screen,#view,#view > *,.studio-solo > *{min-width:0}
+.data-table select{min-width:190px}
+.table-scroll{position:relative}
+.nav-link .badge{margin-left:auto}
+.nav-link,.tab{text-align:left}
+button.nav-link{border:0;background:none;font:inherit;width:100%;cursor:pointer}
+.pv-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.pv-bar .field{min-width:200px}
+.pv-bar--between{justify-content:space-between;align-items:flex-start}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;list-style:none;margin:14px 0 0;padding:0}
+.cards .request__actions{margin-top:auto;padding-top:6px;flex-wrap:wrap}
+.cards .request{align-content:start}
+.change{grid-template-columns:auto 1fr;column-gap:12px}
+.change > input{margin-top:3px}
+.change > div{display:grid;gap:6px;min-width:0}
+.change--skipped{opacity:.65}
+.change .request__meta{flex-wrap:wrap;display:block;overflow-wrap:anywhere}
+.change__controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.change__controls select{width:auto}
+.inline-field{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:560}
+.inline-field select{width:auto;font-weight:400}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.stat__value{font-size:26px;font-weight:650;line-height:1.2}
+.bar{height:6px;min-width:70px;border-radius:999px;background:var(--danger-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.freq{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.freq--off{opacity:.5}
+.pv-indent{padding-left:54px}
+.dialog form{margin:0}
+.dialog textarea{min-height:170px;font-family:var(--mono);font-size:13px}
+.state--error .btn{margin-top:4px}
+@media (max-width:760px){.studio-shell{grid-template-columns:1fr}.studio-shell .sidebar{display:none}.content{padding:20px 16px 48px}.pv-indent{padding-left:0}}
+</style>
+</head>
+<body>
+<!-- Full app (local Studio in a browser tab): the admin's sidebar + top bar. -->
+<div class="shell studio-shell" id="shell" hidden>
+  <aside class="sidebar" aria-label="Studio menu">
+    <div class="sidebar__head">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">P</span>
+        <span class="brand__text"><strong>Be Guided</strong><small>Studio</small></span>
+      </div>
+    </div>
+    <nav id="sideNav" aria-label="Studio sections"></nav>
+    <div class="sidebar__foot"><p class="sidebar__who"><span class="sidebar__avatar" aria-hidden="true">S</span><span class="sidebar__who-text"><strong>Studio</strong><small>Works with Claude Code and Codex</small></span></p></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <span class="topbar__note" id="who">Only on this computer</span>
+      <div class="topbar__actions"><button type="button" class="btn btn--ghost" id="reload">Refresh</button></div>
+    </header>
+    <main class="content" id="fullMain"></main>
+  </div>
+</div>
+<!-- Compact app (inside the admin or a chat): tabs instead of a sidebar. -->
+<div class="studio-solo" id="solo" hidden>
+  <div class="tabs studio-tabs" role="tablist" id="tabs"></div>
+</div>
+<div class="screen" id="screen">
+  <header class="screen__head" id="screenHead"><div><h1 id="screenTitle">Be Guided Studio</h1><p class="lede" id="screenLede"></p></div></header>
+  <div class="notices" id="notice" role="status" aria-live="polite"></div>
+  <div class="callout-inline" id="offline" role="status" hidden></div>
+  <div class="stack-lg" id="view"><div class="state state--loading" aria-busy="true"><span class="spinner" aria-hidden="true"></span> Loading…</div></div>
+</div>
+<dialog class="dialog dialog--wide" id="dlg"></dialog>
+<script>
+(() => {
+'use strict';
+const MODES = [
+  ['text', 'Text only', 'Rewrite the words, keep the pictures.'],
+  ['text+screens', 'Text + screenshots', 'Words and fresh marked-up screenshots.'],
+  ['all', 'Text + screenshots + video', 'Everything, including a click-through video.'],
+  ['video', 'Video only', 'A new click-through video, words untouched.'],
+];
+const MODE_LABEL = Object.fromEntries(MODES.map(([v, l]) => [v, l]));
+const KIND_LABEL = { 'screen-changed': 'Screen changed', 'label-changed': 'Wording changed', 'new-feature': 'New feature', removed: 'Removed', 'new-page': 'New page needed', bug: 'Possible bug' };
+const STATUS = {
+  queued: ['Waiting to run', 'info'], running: ['Running', 'live'], 'waiting-approval': ['Waiting for your choice', 'warn'],
+  updating: ['Updating guides', 'live'], done: ['Done', 'on'], failed: ['Failed', 'draft'], cancelled: ['Cancelled', 'off'],
+};
+const TABS = [
+  { id: 'plans', label: 'Plans and schedules', icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2', lede: 'Each product follows one update plan: how often to check its code and screens, and what to do with what changed.' },
+  { id: 'checks', label: 'Check log', icon: 'M9 4h6 M9 4a1 1 0 0 0-1 1v1h8V5a1 1 0 0 0-1-1 M8 6H6v14h12V6h-2 M9 11h6 M9 15h4', lede: 'Every check, newest first. Open one to see what changed and pick which changes to apply.' },
+  { id: 'skills', label: 'Skills', icon: 'M4 4h11l5 5v11H4z M15 4v5h5', lede: 'Your writing and QA skills. A connected AI reads them before it writes or tests.' },
+  { id: 'feedback', label: 'Reader feedback', icon: 'M7 11v9H4v-9z M7 11l4-7a2 2 0 0 1 2.5 2.6L12.5 10H19a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.8 20H7', lede: 'Every "Was this helpful?" vote from the public guide: thumbs up and down per page, comments, and the email when a reader left one.' },
+];
+const HOURS = [1, 2, 4, 6, 8, 12];
+const ZONES = ['Africa/Lagos', 'Europe/London', 'UTC', 'America/New_York', 'Asia/Dubai', 'Africa/Johannesburg', 'Africa/Nairobi', 'Asia/Kolkata'];
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const when = (iso) => { if (!iso) return '—'; const d = new Date(iso); return isNaN(d) ? '—' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); };
+const icon = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+const badge = (kind, text) => `<span class="badge badge--${kind}">${esc(text)}</span>`;
+const empty = (text) => `<div class="state state--empty">${esc(text)}</div>`;
+// Inside the in-chat admin the Studio is a srcdoc frame and gets its settings from the frame's name.
+const params = new URLSearchParams(location.search || (window.name.startsWith('pv-studio?') ? window.name.slice('pv-studio?'.length) : ''));
+
+// ── Transport: the same tools, three ways ─────────────────────────────────
+// 1. Inside Claude / ChatGPT (MCP Apps): JSON-RPC over postMessage to the host.
+// 2. Inside the admin (?transport=admin): POST /api/v1/automation/call.
+// 3. Local Studio package (?transport=http&base=…): POST <base>/call.
+// 4. Inside the in-chat admin (?transport=parent): the admin page passes the call to the chat.
+const mode = params.get('transport') || (window.parent !== window ? 'mcp' : 'http');
+let rpcId = 0;
+const pending = new Map();
+let hostReady = null;
+
+function postHost(msg) { window.parent.postMessage({ jsonrpc: '2.0', ...msg }, '*'); }
+function hostRequest(method, p) {
+  const id = ++rpcId;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    postHost({ id, method, params: p });
+    setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('The chat did not answer in time. Try again.')); } }, 60000);
+  });
+}
+window.addEventListener('message', (ev) => {
+  if (mode !== 'mcp' || ev.source !== window.parent) return;
+  const m = ev.data;
+  if (!m || m.jsonrpc !== '2.0') return;
+  if (m.id != null && pending.has(m.id) && (m.result !== undefined || m.error)) {
+    const p = pending.get(m.id); pending.delete(m.id);
+    m.error ? p.reject(new Error(m.error.message || 'The chat refused that.')) : p.resolve(m.result);
+    return;
+  }
+  if (m.method === 'ui/notifications/tool-input' && m.params?.arguments?.tab) show(m.params.arguments.tab);
+  if (m.method === 'ui/notifications/tool-result' && m.params?.structuredContent?.snapshot) { snapshot = m.params.structuredContent.snapshot; snapshotArrived(); }
+  if (m.method === 'ui/notifications/host-context-changed') {
+    if (m.params?.theme) document.documentElement.dataset.theme = m.params.theme;
+    if (typeof m.params?.displayMode === 'string') displayMode = m.params.displayMode;
+  }
+  if (m.id != null && m.method) postHost({ id: m.id, result: {} }); // e.g. ui/resource-teardown
+});
+
+async function connectHost() {
+  const r = await hostRequest('ui/initialize', { appInfo: { name: 'be-guided-studio', version: '1.0.0' }, appCapabilities: {}, protocolVersion: '2026-01-26' });
+  if (r?.hostContext?.theme) document.documentElement.dataset.theme = r.hostContext.theme;
+  if (typeof r?.hostContext?.displayMode === 'string') displayMode = r.hostContext.displayMode;
+  postHost({ method: 'ui/notifications/initialized', params: {} });
+  if ('ResizeObserver' in window) {
+    let last = 0;
+    new ResizeObserver(() => {
+      const h = Math.ceil(document.documentElement.scrollHeight);
+      if (Math.abs(h - last) > 4) { last = h; postHost({ method: 'ui/notifications/size-changed', params: { width: document.documentElement.scrollWidth, height: h } }); }
+    }).observe(document.body);
+  }
+}
+
+// What open_be_guided_studio sent with its result. Shown when the chat app will not pass the
+// app's own tool calls on (Claude answers "IPC not available for MCP tool call" in some views).
+let snapshot = null;
+let snapshotArrived = () => {};
+const snapshotReady = new Promise((resolve) => { snapshotArrived = resolve; });
+// 'inline' (in the chat), 'fullscreen' or 'pip'. The chat only passes calls on from the inline view.
+let displayMode = 'inline';
+async function returnToChat() {
+  if (displayMode === 'inline') return false;
+  try {
+    const r = await hostRequest('ui/request-display-mode', { mode: 'inline' });
+    displayMode = typeof r?.mode === 'string' ? r.mode : 'inline';
+    return displayMode === 'inline';
+  } catch { return false; }
+}
+const CHANNEL = /IPC|not available for MCP|did not answer in time|transport|not connected/i;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function fromSnapshot(tool, args) {
+  if (!snapshot) return undefined;
+  if (tool === 'automation_overview') return snapshot.overview ?? undefined;
+  if (tool === 'list_update_checks' && snapshot.checks) {
+    const st = args.status?.[0];
+    return { ...snapshot.checks, checks: (snapshot.checks.checks || []).filter((c) => (!args.product || c.product === args.product) && (!st || c.status === st)) };
+  }
+  if (tool === 'feedback_summary' && snapshot.feedback) {
+    const f = snapshot.feedback;
+    return { ...f, pages: f.pages.filter((p) => !args.pageId || p.pageId === args.pageId), votes: f.votes.filter((v) => (args.helpful === undefined || v.helpful === args.helpful) && (!args.pageId || v.pageId === args.pageId)) };
+  }
+  return undefined;
+}
+function paintOffline() {
+  const el = $('#offline');
+  if (!state.offline) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `Claude is not passing this app's requests on in this view, so this shows what was loaded when the Studio opened (${when(snapshot?.takenAt)}). To make changes, use the Studio in the chat rather than the expanded view, ask Claude in the chat, or <button type="button" class="link-button" id="openAdmin"><strong>open the admin</strong></button>.`;
+  $('#openAdmin').onclick = () => openLink(snapshot?.adminUrl);
+}
+function openLink(url) {
+  if (!url) return;
+  if (mode === 'parent') { window.parent.postMessage({ pvStudio: 'open', url }, '*'); return; }
+  hostRequest('ui/open-link', { url }).catch(() => window.open(url, '_blank', 'noopener'));
+}
+async function hostToolCall(tool, args) {
+  for (let attempt = 0; ; attempt++) {
+    let r;
+    try { r = await hostRequest('tools/call', { name: tool, arguments: args }); }
+    catch (e) { if (!CHANNEL.test(e.message) || attempt >= 2) throw e; if (attempt === 0) await returnToChat(); await sleep(400 * (attempt + 1)); continue; }
+    const text = r?.isError ? (r.content || []).map((c) => c.text).join(' ') : '';
+    if (r?.isError && CHANNEL.test(text) && attempt < 2) { if (attempt === 0) await returnToChat(); await sleep(400 * (attempt + 1)); continue; }
+    if (r?.isError) throw new Error(text || 'That did not work.');
+    return r;
+  }
+}
+
+let parentId = 0;
+const parentPending = new Map();
+if (mode === 'parent') {
+  window.addEventListener('message', (ev) => {
+    const m = ev.data;
+    if (ev.source !== window.parent || m?.pvStudio !== 'answer' || !parentPending.has(m.id)) return;
+    const p = parentPending.get(m.id); parentPending.delete(m.id);
+    m.error ? p.reject(new Error(m.error)) : p.resolve(m.data);
+  });
+  if ('ResizeObserver' in window) {
+    let last = 0;
+    new ResizeObserver(() => {
+      const h = Math.ceil(document.documentElement.scrollHeight);
+      if (Math.abs(h - last) > 4) { last = h; window.parent.postMessage({ pvStudio: 'size', height: h }, '*'); }
+    }).observe(document.body);
+  }
+}
+function parentCall(tool, args) {
+  const id = ++parentId;
+  return new Promise((resolve, reject) => {
+    parentPending.set(id, { resolve, reject });
+    window.parent.postMessage({ pvStudio: 'call', id, tool, args }, '*');
+  });
+}
+
+async function call(tool, args = {}) {
+  if (mode === 'mcp') {
+    await (hostReady ??= connectHost());
+    let r;
+    try { r = await hostToolCall(tool, args); }
+    catch (e) {
+      if (!CHANNEL.test(e.message)) throw e;
+      if (!snapshot) await Promise.race([snapshotReady, sleep(1500)]);
+      const saved = fromSnapshot(tool, args);
+      if (saved !== undefined) { state.offline = true; paintOffline(); return saved; }
+      throw new Error(displayMode === 'inline'
+        ? 'Claude did not pass this on. Try again, ask Claude in the chat to do it, or make the change in the admin.'
+        : 'Claude does not pass requests on from the expanded view. Close the expanded view, use the Studio inside the chat, ask Claude in the chat to do it, or make the change in the admin.');
+    }
+    if (state.offline) { state.offline = false; paintOffline(); }
+    let data = r?.structuredContent;
+    if (data && Object.keys(data).length === 1 && 'result' in data) data = data.result;
+    if (data === undefined) { try { data = JSON.parse((r.content?.[0]?.text || '').split('\n').slice(1).join('\n')); } catch { data = null; } }
+    return data;
+  }
+  if (mode === 'parent') return parentCall(tool, args);
+  const url = mode === 'admin' ? '/api/v1/automation/call' : `${params.get('base') || ''}/call`;
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ tool, args }) });
+  let body = null;
+  try { body = await res.json(); } catch { /* not JSON */ }
+  if (!res.ok || body?.success === false) throw new Error(body?.message || `The server answered ${res.status}.`);
+  return body?.data;
+}
+
+// ── Small UI helpers (the admin's components, as markup) ──────────────────
+let noticeTimer;
+function notice(text, kind = 'ok') {
+  const el = $('#notice');
+  el.innerHTML = text ? `<div class="notice notice--${kind === 'ok' ? 'success' : 'error'}" role="${kind === 'ok' ? 'status' : 'alert'}"><span>${esc(text)}</span><button type="button" class="notice__close" aria-label="Dismiss">×</button></div>` : '';
+  const close = el.querySelector('.notice__close');
+  if (close) close.onclick = () => (el.innerHTML = '');
+  clearTimeout(noticeTimer);
+  if (text && kind === 'ok') noticeTimer = setTimeout(() => (el.innerHTML = ''), 5000);
+}
+async function act(btn, fn, okText) {
+  if (btn) btn.disabled = true;
+  try { const r = await fn(); if (okText) notice(okText); return r; }
+  catch (e) { notice(e.message, 'err'); throw e; }
+  finally { if (btn) btn.disabled = false; }
+}
+/** The admin's Switch: a role=switch button with a label, its state and a hint. */
+function switchField(name, label, on, hint = '', extraClass = '') {
+  const id = `sw-${name}`;
+  return `<div class="switch-field ${extraClass}"><button type="button" role="switch" id="${id}" data-switch="${name}" aria-checked="${on}" class="switch${on ? ' switch--on' : ''}"><span class="switch__thumb"></span></button>
+    <label class="switch-field__label" for="${id}">${esc(label)}<span class="switch-field__state">${on ? 'On' : 'Off'}</span></label>
+    ${hint ? `<p class="field__hint switch-field__hint">${esc(hint)}</p>` : ''}</div>`;
+}
+const isOn = (root, name) => root.querySelector(`[data-switch="${name}"]`)?.getAttribute('aria-checked') === 'true';
+function setSwitch(btn, on) {
+  btn.setAttribute('aria-checked', String(on));
+  btn.classList.toggle('switch--on', on);
+  const state = btn.parentElement.querySelector('.switch-field__state');
+  if (state) state.textContent = on ? 'On' : 'Off';
+}
+document.addEventListener('click', (e) => {
+  const sw = e.target.closest('button.switch[data-switch]');
+  if (!sw || sw.disabled) return;
+  setSwitch(sw, sw.getAttribute('aria-checked') !== 'true');
+  sw.dispatchEvent(new Event('change', { bubbles: true }));
+});
+/** The admin's mode picker: radio choice cards. */
+function modePicker(name, value, legend) {
+  return `<fieldset class="mode-picker"><legend>${esc(legend)}</legend><div class="mode-picker__options">${MODES.map(([v, l, h]) =>
+    `<label class="choice${value === v ? ' choice--on' : ''}"><input type="radio" name="${name}" value="${v}" ${value === v ? 'checked' : ''}><span class="choice__label">${esc(l)}</span><span class="choice__hint">${esc(h)}</span></label>`).join('')}</div></fieldset>`;
+}
+document.addEventListener('change', (e) => {
+  if (e.target.matches?.('.choice input[type=radio]')) {
+    const set = e.target.closest('.mode-picker__options, .choice-row');
+    set?.querySelectorAll('.choice').forEach((c) => c.classList.toggle('choice--on', c.querySelector('input').checked));
+  }
+});
+const fieldError = (text) => `<p class="field__error" role="alert">${esc(text)}</p>`;
+function describe(f, tz) {
+  if (!f) return '';
+  const z = tz ? ` (${tz})` : '';
+  if (f.kind === 'hours') return f.every === 1 ? 'Every hour' : `Every ${f.every} hours`;
+  if (f.kind === 'daily') return `Every day at ${f.at}${z}`;
+  if (f.kind === 'days') return `Every ${f.every} days at ${f.at}${z}`;
+  if (f.kind === 'monthly') return `On day ${f.day} of each month at ${f.at}${z}`;
+  return '';
+}
+function updateWord(p) {
+  if (!p.autoUpdate) return 'Report only (you choose what to apply)';
+  return p.requireApproval ? 'Auto update after your approval' : 'Auto update, no approval';
+}
+
+// ── Layout: full app with the admin's sidebar, or compact with tabs ───────
+const embedded = params.get('embed') === '1' || mode === 'mcp';
+const inAdmin = (mode === 'admin' || mode === 'parent') && params.get('embed') === '1';
+// Inside the admin, the admin's own menu already has "Automatic checks" and "Reader feedback".
+const visibleTabs = inAdmin ? (params.get('tab') === 'feedback' ? ['feedback'] : ['plans', 'checks', 'skills']) : TABS.map((t) => t.id);
+const screen = $('#screen');
+if (embedded) {
+  document.body.classList.add('embedded');
+  if (inAdmin) document.body.classList.add('in-admin');
+  $('#solo').hidden = false;
+  $('#solo').append(screen);
+  $('#tabs').hidden = visibleTabs.length < 2;
+  $('#screenHead').hidden = inAdmin; // the admin shows its own heading above the frame
+  $('#tabs').innerHTML = TABS.filter((t) => visibleTabs.includes(t.id)).map((t) => `<button type="button" role="tab" class="tab" data-tab="${t.id}">${esc(t.label)}</button>`).join('');
+} else {
+  $('#shell').hidden = false;
+  $('#fullMain').append(screen);
+  $('#sideNav').innerHTML = TABS.map((t) => `<button type="button" class="nav-link" data-tab="${t.id}">${icon(t.icon)}<span class="nav-link__text">${esc(t.label)}</span></button>`).join('');
+  $('#reload').onclick = () => render();
+  if (params.get('base')) $('#who').textContent = 'Only on this computer · connected to your Be Guided';
+}
+
+// ── State and routing ─────────────────────────────────────────────────────
+const state = { tab: 'plans', overview: null, checkId: null, feedbackFilter: 'all' };
+function show(tab, opts = {}) {
+  state.tab = visibleTabs.includes(tab) ? tab : visibleTabs[0];
+  state.checkId = opts.checkId ?? null;
+  const t = TABS.find((x) => x.id === state.tab);
+  $('#screenTitle').textContent = t.label;
+  $('#screenLede').textContent = t.lede;
+  document.title = `${t.label} · Be Guided Studio`;
+  for (const b of document.querySelectorAll('#tabs [data-tab]')) { const on = b.dataset.tab === state.tab; b.classList.toggle('tab--on', on); b.setAttribute('aria-selected', String(on)); }
+  for (const b of document.querySelectorAll('#sideNav [data-tab]')) { const on = b.dataset.tab === state.tab; b.classList.toggle('nav-link--on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
+  if (!opts.keepNotice) notice('');
+  render();
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('#tabs [data-tab], #sideNav [data-tab]'); if (b) show(b.dataset.tab); });
+
+async function loadOverview() { state.overview = await call('automation_overview'); paintCounts(); return state.overview; }
+function paintCounts() {
+  const n = (state.overview?.recentChecks || []).filter((c) => c.status === 'waiting-approval').length;
+  const tab = $('#tabs [data-tab="checks"]');
+  if (tab) tab.innerHTML = 'Check log' + (n ? ` <span class="tab__count" title="Waiting for your choice">${n}</span>` : '');
+  const nav = $('#sideNav [data-tab="checks"]');
+  if (nav) nav.innerHTML = `${icon(TABS[1].icon)}<span class="nav-link__text">Check log</span>${n ? `<span class="badge badge--warn" title="Waiting for your choice">${n}</span>` : ''}`;
+}
+
+async function render() {
+  const view = $('#view');
+  view.innerHTML = '<div class="state state--loading" aria-busy="true"><span class="spinner" aria-hidden="true"></span> Loading…</div>';
+  try {
+    if (state.tab === 'plans') await renderPlans(view);
+    else if (state.tab === 'checks') await (state.checkId ? renderCheck(view, state.checkId) : renderChecks(view));
+    else if (state.tab === 'skills') await renderSkills(view);
+    else await renderFeedback(view);
+  } catch (e) {
+    view.innerHTML = `<div class="state state--error" role="alert"><strong>That did not load.</strong><span>${esc(e.message)}</span><button type="button" class="btn" id="retry">Try again</button></div>`;
+    $('#retry').onclick = render;
+  }
+}
+
+// ── Plans and schedules ───────────────────────────────────────────────────
+async function renderPlans(view) {
+  const o = await loadOverview();
+  const planOpts = (sel) => `<option value="">Off (no automatic checks)</option>` + o.plans.map((p) => `<option value="${esc(p.id)}" ${p.id === sel ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+  view.innerHTML = `
+  <section class="panel">
+    <h2>Products</h2>
+    <p class="muted">Each product follows one plan at a time. Pick a plan to switch it on; the next check time updates straight away.</p>
+    <div class="pv-bar" style="margin-bottom:14px">
+      <div class="field"><label for="allPlan">Apply one plan to every product</label><select id="allPlan">${planOpts(null)}</select></div>
+      <button type="button" class="btn" id="allApply">Apply to all products</button>
+    </div>
+    ${o.products.length ? `<div class="table-scroll"><table class="data-table">
+      <thead><tr><th>Product</th><th>Plan</th><th>Next check</th><th>Last check</th><th class="data-table__actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+      <tbody>${o.products.map((p) => `<tr>
+        <th scope="row">${esc(p.name)}<div class="muted mono small">${esc(p.product)}</div></th>
+        <td><select data-assign="${esc(p.product)}" aria-label="Plan for ${esc(p.name)}">${planOpts(p.planId)}</select></td>
+        <td class="nowrap">${p.nextRunAt ? when(p.nextRunAt) : '<span class="muted">No automatic checks</span>'}</td>
+        <td class="nowrap">${when(p.lastRunAt)}</td>
+        <td class="data-table__actions"><button type="button" class="btn btn--small" data-run="${esc(p.product)}">Check now</button></td>
+      </tr>`).join('')}</tbody></table></div>` : empty('No products yet.')}
+  </section>
+  <section class="panel">
+    <div class="pv-bar pv-bar--between"><div><h2>Update plans</h2>
+    <p class="muted" style="margin-top:4px">Ready-made plans are presets you can change. Make as many of your own as you like.</p></div>
+    <button type="button" class="btn btn--primary" id="newPlan">New plan</button></div>
+    <ul class="cards">${o.plans.map((p) => `<li class="request">
+      <div class="request__head"><h3>${esc(p.name)}</h3>${p.builtIn ? badge('neutral', 'Ready-made') : ''}</div>
+      <div class="badges">${badge(p.autoCheck ? 'on' : 'off', `Auto check ${p.autoCheck ? 'on' : 'off'}`)}
+        ${badge(p.autoUpdate ? 'on' : 'off', `Auto update ${p.autoUpdate ? 'on' : 'off'}`)}
+        ${p.autoUpdate && p.requireApproval ? badge('warn', 'Needs approval') : ''}</div>
+      <p class="request__scope">${esc(p.autoCheck ? describe(p.frequency, p.timeZone) : 'Only when you press Check now')}</p>
+      <div class="request__meta">${esc(MODE_LABEL[p.contentMode])} · ${esc(updateWord(p))}</div>
+      <div class="request__meta">Used by: ${p.products.length ? esc(p.products.join(', ')) : 'no products yet'}</div>
+      <div class="request__actions"><button type="button" class="btn btn--small" data-edit="${esc(p.id)}">Edit</button>
+        <button type="button" class="btn btn--small" data-copy="${esc(p.id)}">Duplicate</button>
+        ${p.builtIn ? '' : `<button type="button" class="btn btn--small btn--ghost" data-del="${esc(p.id)}">Delete</button>`}</div>
+    </li>`).join('')}</ul>
+  </section>`;
+  view.querySelectorAll('select[data-assign]').forEach((s) => s.addEventListener('change', () =>
+    act(s, () => call('assign_update_plan', { planId: s.value || null, products: [s.dataset.assign] }), s.value ? 'Plan switched on.' : 'Automatic checks switched off.').then(render, () => render())));
+  $('#allApply').onclick = (e) => {
+    const planId = $('#allPlan').value || null;
+    if (!confirm(planId ? 'Use this plan for every product? It replaces each product’s current plan.' : 'Switch automatic checks off for every product?')) return;
+    act(e.currentTarget, () => call('assign_update_plan', { planId, products: 'all' }), 'Done for all products.').then(render, () => {});
+  };
+  view.querySelectorAll('[data-run]').forEach((b) => b.onclick = () => runNow(b, b.dataset.run));
+  $('#newPlan').onclick = () => planDialog(null);
+  view.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => planDialog(o.plans.find((p) => p.id === b.dataset.edit)));
+  view.querySelectorAll('[data-copy]').forEach((b) => b.onclick = () => { const p = o.plans.find((x) => x.id === b.dataset.copy); planDialog({ ...p, id: undefined, builtIn: false, name: `${p.name} (copy)`.slice(0, 80) }); });
+  view.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => {
+    const p = o.plans.find((x) => x.id === b.dataset.del);
+    if (!confirm(`Delete the plan “${p.name}”? Products using it will have automatic checks switched off.`)) return;
+    act(b, () => call('delete_update_plan', { planId: p.id }), 'Plan deleted.').then(render, () => {});
+  });
+}
+
+function freshDialog() {
+  const dlg = $('#dlg');
+  dlg.onclose = null;
+  dlg.returnValue = '';
+  return dlg;
+}
+/** The admin's Dialog: head with title and ×, body, footer with the buttons. */
+function dialogShell(id, title, body, submitLabel) {
+  return `<form method="dialog" id="${id}" novalidate>
+    <header class="dialog__head"><h2>${esc(title)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">×</button></header>
+    <div class="dialog__body stack">${body}</div>
+    <footer class="dialog__foot"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn btn--primary">${esc(submitLabel)}</button></footer></form>`;
+}
+function wireClose(dlg) { dlg.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => dlg.close())); }
+
+function runNow(btn, product) {
+  const dlg = freshDialog();
+  dlg.innerHTML = dialogShell('runForm', `Check ${product} now`,
+    `<p class="muted">An AI connected to Be Guided (Claude Code or Codex) picks this up, compares the code and screens with the guide, and lists what changed in the Check log.</p>
+     ${modePicker('mode', 'text+screens', 'Content mode for this check')}`, 'Queue the check');
+  const form = $('#runForm');
+  wireClose(dlg);
+  // Handled on submit (not on the dialog's close event, which some chat hosts delay while the app is in the background).
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const contentMode = form.querySelector('input[name=mode]:checked').value;
+    dlg.close();
+    act(btn, () => call('run_update_check', { product, contentMode }), 'Check queued. It shows in the Check log.').then(() => show('checks', { keepNotice: true }), () => {});
+  };
+  dlg.showModal();
+}
+
+function planDialog(plan) {
+  const p = plan || { name: '', autoCheck: true, frequency: { kind: 'daily', at: '08:00' }, timeZone: 'Africa/Lagos', autoUpdate: false, requireApproval: true, contentMode: 'text+screens' };
+  const f = p.frequency;
+  const zones = ZONES.includes(p.timeZone) ? ZONES : [p.timeZone, ...ZONES];
+  const dlg = freshDialog();
+  dlg.innerHTML = dialogShell('planForm', p.id ? 'Edit plan' : 'New plan', `
+    <div class="field" id="nameField"><label for="planName">Name</label><input id="planName" type="text" name="name" maxlength="80" required value="${esc(p.name)}" placeholder="For example: Every morning, text and screenshots"><span id="nameErr"></span></div>
+    ${switchField('autoCheck', 'Auto check', !!p.autoCheck, 'Check the code and screens on a schedule. Off: only when someone presses Check now.')}
+    <div id="freqBox" class="freq">
+      <div class="field"><label for="fKind">How often</label><select id="fKind" name="kind">
+        <option value="hours" ${f.kind === 'hours' ? 'selected' : ''}>Every few hours</option>
+        <option value="daily" ${f.kind === 'daily' ? 'selected' : ''}>Every day at a set time</option>
+        <option value="days" ${f.kind === 'days' ? 'selected' : ''}>Every few days</option>
+        <option value="monthly" ${f.kind === 'monthly' ? 'selected' : ''}>A set day each month</option></select></div>
+      <div class="field" data-k="hours"><label for="fHours">Every</label><select id="fHours" name="hours">${HOURS.map((h) => `<option value="${h}" ${f.every === h && f.kind === 'hours' ? 'selected' : ''}>${h === 1 ? '1 hour' : h + ' hours'}</option>`).join('')}</select></div>
+      <div class="field" data-k="days"><label for="fDays">Every how many days</label><input id="fDays" type="number" name="days" min="2" max="30" value="${f.kind === 'days' ? f.every : 3}"></div>
+      <div class="field" data-k="monthly"><label for="fDay">Day of the month</label><input id="fDay" type="number" name="day" min="1" max="28" value="${f.kind === 'monthly' ? f.day : 1}"></div>
+      <div class="field" data-k="at"><label for="fAt">At</label><input id="fAt" type="time" name="at" value="${esc(f.at || '08:00')}"></div>
+      <div class="field" data-k="at"><label for="fTz">Time zone</label><select id="fTz" name="tz">${zones.map((z) => `<option ${z === p.timeZone ? 'selected' : ''}>${esc(z)}</option>`).join('')}</select></div>
+    </div>
+    ${switchField('autoUpdate', 'Auto update', !!p.autoUpdate, 'After a check, update the guide pages for what changed. Off: the check only reports, and you pick what to apply.')}
+    ${switchField('requireApproval', 'Require approval before auto updates', !!p.requireApproval, 'The check stops and waits for you to pick which changes to apply.', 'pv-indent')}
+    ${modePicker('contentMode', p.contentMode, 'Content mode for updates')}
+    <p class="callout-inline" id="planSummary"></p>
+    <div id="planErr"></div>`, 'Save plan');
+  const form = $('#planForm');
+  wireClose(dlg);
+  const read = () => {
+    const fd = new FormData(form);
+    const kind = fd.get('kind');
+    const at = fd.get('at') || '08:00';
+    const frequency = kind === 'hours' ? { kind, every: Number(fd.get('hours')) } : kind === 'daily' ? { kind, at } : kind === 'days' ? { kind, every: Number(fd.get('days')), at } : { kind, day: Number(fd.get('day')), at };
+    const autoUpdate = isOn(form, 'autoUpdate');
+    return { ...(p.id ? { id: p.id } : {}), name: String(fd.get('name') || '').trim(), autoCheck: isOn(form, 'autoCheck'), frequency, timeZone: fd.get('tz'), autoUpdate, requireApproval: autoUpdate ? isOn(form, 'requireApproval') : true, contentMode: fd.get('contentMode') };
+  };
+  const sync = () => {
+    const kind = form.kind.value;
+    form.querySelectorAll('[data-k]').forEach((el) => { const k = el.dataset.k; el.hidden = !(k === kind || (k === 'at' && kind !== 'hours')); });
+    $('#freqBox').classList.toggle('freq--off', !isOn(form, 'autoCheck'));
+    form.querySelector('[data-switch="requireApproval"]').disabled = !isOn(form, 'autoUpdate');
+    const v = read();
+    $('#planSummary').textContent = `${v.autoCheck ? describe(v.frequency, v.timeZone) : 'Only when you press Check now'} · ${MODE_LABEL[v.contentMode]} · ${updateWord(v)}.`;
+  };
+  form.addEventListener('input', sync); form.addEventListener('change', sync); sync();
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const v = read();
+    $('#nameField').classList.remove('field--error'); $('#nameErr').innerHTML = ''; $('#planErr').innerHTML = '';
+    if (v.name.length < 2) { $('#nameField').classList.add('field--error'); $('#nameErr').innerHTML = fieldError('Give the plan a name (at least 2 letters).'); form.name.focus(); return; }
+    try { await call('save_update_plan', v); dlg.close(); notice('Plan saved.'); render(); }
+    catch (err) { $('#planErr').innerHTML = `<div class="state state--error state--inline" role="alert">${esc(err.message)}</div>`; }
+  };
+  dlg.showModal();
+}
+
+// ── Check log ─────────────────────────────────────────────────────────────
+async function renderChecks(view) {
+  const o = await loadOverview();
+  const r = await call('list_update_checks', { limit: 100, ...(state.filterProduct ? { product: state.filterProduct } : {}), ...(state.filterStatus ? { status: [state.filterStatus] } : {}) });
+  const checks = r.checks || [];
+  view.innerHTML = `<section class="panel">
+    <div class="filters-panel" style="margin-bottom:14px">
+      <div class="field"><label for="fProduct">Product</label><select id="fProduct"><option value="">All products</option>${o.products.map((p) => `<option value="${esc(p.product)}" ${state.filterProduct === p.product ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="field"><label for="fStatus">Status</label><select id="fStatus"><option value="">Any status</option>${Object.entries(STATUS).map(([k, [l]]) => `<option value="${k}" ${state.filterStatus === k ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+      <button type="button" class="btn filters-panel__clear" id="refresh">Refresh</button>
+    </div>
+    ${checks.length ? `<div class="table-scroll"><table class="data-table data-table--clickable"><thead><tr><th>When</th><th>Product</th><th>Status</th><th>Changes</th><th>Plan</th><th>Mode</th></tr></thead><tbody>
+    ${checks.map((c) => `<tr data-open="${esc(c.id)}" tabindex="0" style="cursor:pointer">
+      <td class="nowrap"><button type="button" class="link-button">${when(c.createdAt)}</button><div class="muted small">${c.trigger === 'schedule' ? 'Scheduled' : 'Check now' + (c.requestedBy ? ' by ' + esc(c.requestedBy) : '')}</div></td>
+      <td>${esc(c.product)}</td>
+      <td>${badge(STATUS[c.status][1], STATUS[c.status][0])}</td>
+      <td>${c.changeCount}${c.pendingCount ? ` ${badge('warn', `${c.pendingCount} to choose`)}` : ''}</td>
+      <td>${esc(c.planName || '—')}</td>
+      <td>${esc(MODE_LABEL[c.contentMode])}</td></tr>`).join('')}
+    </tbody></table></div>` : empty('No checks yet. Press Check now on a product, or switch a plan on.')}
+  </section>`;
+  $('#fProduct').onchange = (e) => { state.filterProduct = e.target.value; render(); };
+  $('#fStatus').onchange = (e) => { state.filterStatus = e.target.value; render(); };
+  $('#refresh').onclick = render;
+  view.querySelectorAll('[data-open]').forEach((tr) => {
+    const open = () => show('checks', { checkId: tr.dataset.open });
+    tr.onclick = open; tr.onkeydown = (e) => { if (e.key === 'Enter') open(); };
+  });
+}
+
+async function renderCheck(view, id) {
+  const [c] = await Promise.all([call('get_update_check', { checkId: id }), loadOverview()]);
+  const choosing = c.status === 'waiting-approval';
+  const changes = c.changes || [];
+  const modeSelect = (attr, value, withKeep) => `<select ${attr}>${withKeep ? '<option value="">Keep each</option>' : ''}${MODES.map(([v, l]) => `<option value="${v}" ${value === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+  view.innerHTML = `<div><button type="button" class="link-button" id="back">← All checks</button></div>
+  <section class="panel stack">
+    <div class="request__head"><h2>${esc(c.product)} · ${when(c.createdAt)}</h2>${badge(STATUS[c.status][1], STATUS[c.status][0])}</div>
+    <p class="muted">${esc(c.planName ? 'Plan: ' + c.planName : 'No plan (Check now)')} · ${esc(MODE_LABEL[c.contentMode])} · ${c.runBy ? 'Run by ' + esc(c.runBy) : 'Not started yet'}${c.finishedAt ? ' · Finished ' + when(c.finishedAt) : ''}</p>
+    ${c.summary ? `<p class="callout-inline">${esc(c.summary)}</p>` : ''}
+    ${c.error ? `<div class="state state--error state--inline" role="alert">${esc(c.error)}</div>` : ''}
+    ${c.status === 'queued' ? '<p class="callout-inline">Waiting for a connected AI to pick this up. In Claude Code or Codex, say “run the queued Be Guided checks”, or use the local Studio runner.</p>' : ''}
+    ${changes.length ? `${choosing ? `<div class="pv-bar"><button type="button" class="btn btn--small" id="selAll">Select all</button><button type="button" class="btn btn--small" id="selNone">Select none</button>
+      <label class="inline-field">Mode for all selected ${modeSelect('id="modeAll"', '', true)}</label></div>` : ''}
+      <ul class="request-list" id="changes" style="margin-top:0">${changes.map((ch) => `<li class="request change${ch.decision === 'skipped' ? ' change--skipped' : ''}" data-id="${esc(ch.id)}">
+        <input type="checkbox" aria-label="Apply this change" ${choosing ? '' : 'disabled'} ${ch.decision === 'skipped' ? '' : (choosing ? (ch.kind === 'bug' ? '' : 'checked') : (ch.decision !== 'pending' ? 'checked' : ''))}>
+        <div>
+          <div class="request__head"><h3>${esc(ch.title)}</h3><div class="badges">${badge(ch.kind === 'bug' ? 'draft' : 'info', KIND_LABEL[ch.kind] || ch.kind)}
+            ${ch.decision !== 'pending' ? badge(ch.decision === 'applied' ? 'on' : ch.decision === 'skipped' ? 'off' : 'live', { selected: 'Chosen', skipped: 'Skipped', applied: 'Applied' }[ch.decision]) : ''}</div></div>
+          ${ch.detail ? `<p class="request__scope" style="white-space:pre-wrap">${esc(ch.detail)}</p>` : ''}
+          <div class="request__meta">${ch.pageId ? 'Page: <span class="mono">' + esc(ch.pageId) + '</span>' : 'No page yet'}${ch.evidence ? ' · Seen in <span class="mono">' + esc(ch.evidence) + '</span>' : ''}</div>
+          <div class="change__controls">${choosing ? `<label class="inline-field">Update as ${modeSelect('data-mode', ch.mode || c.contentMode, false)}</label>` : (ch.mode ? `<span class="muted small">Mode: ${esc(MODE_LABEL[ch.mode])}</span>` : '')}
+            ${ch.decidedBy ? `<span class="muted small">${esc(ch.decidedBy)}, ${when(ch.decidedAt)}</span>` : ''}</div>
+        </div>
+      </li>`).join('')}</ul>
+      ${choosing ? `<div class="field"><label for="note">Note for whoever applies them (optional)</label><input type="text" id="note" maxlength="1000" placeholder="For example: keep the old screenshot for the list"></div>
+      <div class="form-actions" style="justify-content:flex-end"><button type="button" class="btn" id="skipAll">Skip all</button><button type="button" class="btn btn--primary" id="apply">Apply selected</button></div>` : ''}`
+    : (['done', 'failed', 'cancelled'].includes(c.status) ? empty('No changes were found.') : '')}
+    ${['queued', 'running', 'waiting-approval'].includes(c.status) ? '<div><button type="button" class="btn btn--small btn--danger" id="cancel">Cancel this check</button></div>' : ''}
+  </section>`;
+  $('#back').onclick = () => show('checks');
+  const box = $('#changes');
+  const items = (includeAll) => [...view.querySelectorAll('.change')].map((el) => ({ changeId: el.dataset.id, include: includeAll ?? el.querySelector('input[type=checkbox]').checked, mode: el.querySelector('[data-mode]')?.value }));
+  if (choosing && box) {
+    $('#selAll').onclick = () => box.querySelectorAll('input[type=checkbox]').forEach((i) => (i.checked = true));
+    $('#selNone').onclick = () => box.querySelectorAll('input[type=checkbox]').forEach((i) => (i.checked = false));
+    $('#modeAll').onchange = (e) => { if (e.target.value) box.querySelectorAll('.change').forEach((el) => { if (el.querySelector('input').checked) el.querySelector('[data-mode]').value = e.target.value; }); };
+    const decide = (btn, all) => {
+      const list = items(all);
+      const n = list.filter((i) => i.include).length;
+      if (!confirm(n ? `Apply ${n} change${n === 1 ? '' : 's'} and skip ${list.length - n}?` : 'Skip every change in this check?')) return;
+      const note = $('#note').value.trim();
+      act(btn, () => call('decide_update_check', { checkId: c.id, items: list, ...(note ? { note } : {}) }), n ? 'Saved. The chosen changes are queued as guide updates.' : 'All changes skipped.').then(render, () => {});
+    };
+    $('#apply').onclick = (e) => decide(e.currentTarget);
+    $('#skipAll').onclick = (e) => decide(e.currentTarget, false);
+  }
+  const cancel = $('#cancel');
+  if (cancel) cancel.onclick = () => { if (confirm('Cancel this check?')) act(cancel, () => call('cancel_update_check', { checkId: c.id }), 'Check cancelled.').then(render, () => {}); };
+}
+
+// ── Skills ────────────────────────────────────────────────────────────────
+async function renderSkills(view) {
+  const o = await loadOverview();
+  const skills = o.skills || [];
+  const section = (kind, title, sub) => {
+    const list = skills.filter((s) => s.kind === kind);
+    return `<section class="panel"><div class="pv-bar pv-bar--between"><div><h2>${title}</h2><p class="muted" style="margin-top:4px">${sub}</p></div>
+      <button type="button" class="btn btn--primary" data-new="${kind}">Upload ${kind === 'writing' ? 'a writing' : 'a QA'} skill</button></div>
+      ${list.length ? `<ul class="cards">${list.map((s) => `<li class="request">
+        <div class="request__head"><h3>${esc(s.name)}</h3>${badge(s.active ? 'on' : 'off', s.active ? 'In use' : 'Switched off')}</div>
+        <p class="request__scope">${s.products ? 'For ' + esc(s.products.join(', ')) : 'For every product'}</p>
+        <div class="request__meta">${s.fileName ? esc(s.fileName) + ' · ' : ''}${Math.max(1, Math.round(s.size / 1000))} KB of text · updated ${when(s.updatedAt)}</div>
+        <div class="request__actions"><button type="button" class="btn btn--small" data-open-skill="${esc(s.id)}">View or edit</button><button type="button" class="btn btn--small btn--ghost" data-del-skill="${esc(s.id)}">Delete</button></div>
+      </li>`).join('')}</ul>` : `<div style="margin-top:14px">${empty('None yet.')}</div>`}</section>`;
+  };
+  view.innerHTML =
+    section('writing', 'Writing skills', 'How guides are written: structure, tone, words to use. A connected AI reads the one for its product before writing, on top of the house standard.') +
+    section('qa', 'QA and test skills', 'How to test the product during a check: what to click through, what to compare, what counts as a defect.');
+  view.querySelectorAll('[data-new]').forEach((b) => b.onclick = () => skillDialog({ kind: b.dataset.new }, o.products));
+  view.querySelectorAll('[data-open-skill]').forEach((b) => b.onclick = async () => { const s = await act(b, () => call('get_skill', { skillId: b.dataset.openSkill })); skillDialog(s, o.products); });
+  view.querySelectorAll('[data-del-skill]').forEach((b) => b.onclick = () => {
+    const s = skills.find((x) => x.id === b.dataset.delSkill);
+    if (confirm(`Delete the skill “${s.name}”?`)) act(b, () => call('delete_skill', { skillId: s.id }), 'Skill deleted.').then(render, () => {});
+  });
+}
+
+function skillDialog(s, products) {
+  const dlg = freshDialog();
+  const forAll = !s.products;
+  dlg.innerHTML = dialogShell('skillForm', s.id ? 'Edit skill' : s.kind === 'qa' ? 'Upload a QA skill' : 'Upload a writing skill', `
+    <div class="grid-2">
+      <div class="field"><label for="sName">Name</label><input id="sName" type="text" name="name" maxlength="80" value="${esc(s.name || '')}" placeholder="${s.kind === 'qa' ? 'Release test checklist' : 'House style'}"></div>
+      <div class="field"><label for="sKind">Kind</label><select id="sKind" name="kind"><option value="writing" ${s.kind === 'writing' ? 'selected' : ''}>Writing (how guides are written)</option><option value="qa" ${s.kind === 'qa' ? 'selected' : ''}>QA (how to test)</option></select></div>
+    </div>
+    <div class="field"><label for="sFile">File</label><input id="sFile" type="file" name="file" accept=".md,.markdown,.txt,text/markdown,text/plain"><p class="field__hint">A .md or .txt file, for example a SKILL.md. Up to 200 KB.</p></div>
+    <div class="field"><label for="sContent">Or paste the text</label><textarea id="sContent" name="content" placeholder="# How we write guides...">${esc(s.content || '')}</textarea></div>
+    <fieldset class="stack"><legend>Products</legend>
+      ${switchField('all', 'Every product', forAll)}
+      <div class="product-picks__list" id="prodList" ${forAll ? 'hidden' : ''}>${products.map((p) => `<label class="check-card${s.products?.includes(p.product) ? ' check-card--on' : ''}"><input type="checkbox" name="p" value="${esc(p.product)}" ${s.products?.includes(p.product) ? 'checked' : ''}> ${esc(p.name)}</label>`).join('')}</div></fieldset>
+    ${switchField('active', 'In use', s.active !== false, 'Switched off skills stay on file but are not handed to the AI.')}
+    <div id="skillErr"></div>`, 'Save skill');
+  const form = $('#skillForm');
+  wireClose(dlg);
+  let fileName = s.fileName || null;
+  form.addEventListener('change', (e) => {
+    if (e.target.matches?.('[data-switch="all"]')) $('#prodList').hidden = isOn(form, 'all');
+    if (e.target.name === 'p') e.target.closest('.check-card').classList.toggle('check-card--on', e.target.checked);
+  });
+  form.file.onchange = () => {
+    const file = form.file.files[0];
+    if (!file) return;
+    if (file.size > 200000) { $('#skillErr').innerHTML = '<div class="state state--error state--inline" role="alert">That file is over 200 KB. Use a shorter skill.</div>'; return; }
+    const r = new FileReader();
+    r.onload = () => { form.content.value = String(r.result); fileName = file.name; if (!form.name.value) form.name.value = file.name.replace(/\.(md|markdown|txt)$/i, '').replace(/[-_]+/g, ' ').slice(0, 80); };
+    r.readAsText(file);
+  };
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const everyProduct = isOn(form, 'all');
+    const chosen = [...form.querySelectorAll('input[name=p]:checked')].map((i) => i.value);
+    const body = { ...(s.id ? { id: s.id } : {}), kind: form.kind.value, name: form.name.value.trim(), content: form.content.value, fileName, products: everyProduct ? null : chosen, active: isOn(form, 'active') };
+    const problems = [];
+    if (body.name.length < 2) problems.push('Give the skill a name.');
+    if (body.content.trim().length < 20) problems.push('Upload a file or paste the skill text (at least 20 characters).');
+    if (!everyProduct && !chosen.length) problems.push('Pick at least one product, or choose Every product.');
+    if (problems.length) { $('#skillErr').innerHTML = `<div class="state state--error state--inline" role="alert">${problems.map(esc).join(' ')}</div>`; return; }
+    try { await call('save_skill', body); dlg.close(); notice('Skill saved.'); render(); }
+    catch (err) { $('#skillErr').innerHTML = `<div class="state state--error state--inline" role="alert">${esc(err.message)}</div>`; }
+  };
+  dlg.showModal();
+}
+
+// ── Reader feedback ───────────────────────────────────────────────────────
+async function renderFeedback(view) {
+  const f = state.feedbackFilter;
+  const r = await call('feedback_summary', { limit: 300, ...(f === 'up' ? { helpful: true } : f === 'down' ? { helpful: false } : {}), ...(state.feedbackPage ? { pageId: state.feedbackPage } : {}) });
+  const t = r.totals;
+  const total = t.up + t.down;
+  const stat = (value, label) => `<div class="panel"><div class="stat__value">${value}</div><div class="muted small">${esc(label)}</div></div>`;
+  view.innerHTML = `
+  <div class="stats">
+    ${stat(t.up, 'Thumbs up (helpful)')}${stat(t.down, 'Thumbs down (not helpful)')}
+    ${stat(total ? Math.round((t.up / total) * 100) + '%' : '—', 'Found it helpful')}${stat(t.comments, 'Comments')}
+  </div>
+  <section class="panel"><h2>By page</h2><p class="muted">Pages with the most thumbs down first. Click a page to see only its votes.</p>
+    ${r.pages.length ? `<div class="table-scroll"><table class="data-table data-table--clickable"><thead><tr><th>Page</th><th>Up</th><th>Down</th><th>Helpful</th><th>Last vote</th></tr></thead><tbody>
+    ${[...r.pages].sort((a, b) => b.down - a.down || b.up - a.up).map((p) => `<tr data-page="${esc(p.pageId)}" tabindex="0" style="cursor:pointer"><td><button type="button" class="link-button">${esc(p.pageTitle || p.pageId)}</button><div class="muted mono small">${esc(p.pageId)}</div></td><td>${p.up}</td><td>${p.down}</td>
+      <td><div class="bar" title="${p.up} of ${p.up + p.down}"><i style="width:${p.up + p.down ? Math.round((p.up / (p.up + p.down)) * 100) : 0}%"></i></div></td><td class="nowrap">${when(p.lastAt)}</td></tr>`).join('')}
+    </tbody></table></div>` : empty('No votes yet. Readers vote with "Was this helpful?" at the end of each guide page.')}
+  </section>
+  <section class="panel stack"><div class="pv-bar pv-bar--between"><h2>Every vote${state.feedbackPage ? ' on ' + esc(state.feedbackPage) : ''}</h2>
+    <div class="pv-bar" style="align-items:center">${state.feedbackPage ? '<button type="button" class="btn btn--small" id="allPages">All pages</button>' : ''}
+    <div class="segmented" role="group" aria-label="Show">${[['all', 'All votes'], ['up', 'Thumbs up'], ['down', 'Thumbs down']].map(([v, l]) => `<button type="button" class="segmented__item${f === v ? ' segmented__item--on' : ''}" data-help="${v}" aria-pressed="${f === v}">${l}</button>`).join('')}</div>
+    <button type="button" class="btn btn--small" id="csv">Download CSV</button></div></div>
+    ${r.votes.length ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>When</th><th>Vote</th><th>Page</th><th>Comment</th><th>Email</th><th>Country</th></tr></thead><tbody>
+    ${r.votes.map((v) => `<tr><td class="nowrap">${when(v.updatedAt)}</td><td>${v.helpful ? badge('on', 'Helpful') : badge('draft', 'Not helpful')}</td>
+      <td>${esc(v.pageTitle || v.pageId)}</td><td>${esc(v.comment || '')}</td><td>${v.email ? `<a href="mailto:${esc(v.email)}">${esc(v.email)}</a>` : '<span class="muted">—</span>'}</td><td>${esc(v.country || '—')}</td></tr>`).join('')}
+    </tbody></table></div>` : empty('No votes match.')}
+  </section>`;
+  view.querySelectorAll('[data-help]').forEach((b) => b.onclick = () => { state.feedbackFilter = b.dataset.help; render(); });
+  const ap = $('#allPages'); if (ap) ap.onclick = () => { state.feedbackPage = null; render(); };
+  view.querySelectorAll('[data-page]').forEach((tr) => { const go = () => { state.feedbackPage = tr.dataset.page; render(); }; tr.onclick = go; tr.onkeydown = (e) => { if (e.key === 'Enter') go(); }; });
+  $('#csv').onclick = () => {
+    const rows = [['When', 'Helpful', 'Page id', 'Page', 'Comment', 'Email', 'Country'], ...r.votes.map((v) => [v.updatedAt, v.helpful ? 'yes' : 'no', v.pageId, v.pageTitle || '', v.comment || '', v.email || '', v.country || ''])];
+    const csv = rows.map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'reader-feedback.csv';
+    a.click();
+  };
+}
+
+if (params.get('theme') === 'dark' || params.get('theme') === 'light') document.documentElement.dataset.theme = params.get('theme');
+show(params.get('tab') || 'plans');
+})();
+</script>
+</body>
+</html>

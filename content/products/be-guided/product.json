@@ -1,0 +1,13 @@
+{
+  "name": "Be Guided",
+  "summary": "Host user guides for your apps and keep them up to date with Claude, ChatGPT or Codex.",
+  "visibility": "public",
+  "status": "available",
+  "order": 1,
+  "editorApproval": false,
+  "source": {
+    "repos": [
+      { "url": "kunlemaxwell/be-guided", "branch": "main", "paths": ["src", "admin/web/src", "backend/src", "scripts/cloudflare"] }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fake MCP Apps host</title>
+<!--
+  A minimal stand-in for Claude's MCP Apps host, for browser checks only:
+  it loads the Studio resource from the editor connector into an iframe and
+  answers the app's JSON-RPC (ui/initialize, tools/call) by forwarding
+  tools/call to the connector with this run's throw-away key. Records every message.
+  ?ipc=broken  refuses every tools/call the way Claude does in some views ("IPC not available for MCP tool call")
+  ?ipc=flaky   refuses only the first tools/call, then works
+  ?app=admin   loads the whole admin (ui://be-guided/admin.html) instead of the Studio; &screen=… picks the screen
+  ?display=fullscreen  starts in the expanded view, where the chat refuses every tools/call until the app asks to go back inline (ui/request-display-mode)
+  ?sandbox=strict  frames the app the strict way (scripts only: no same-origin, no pop-ups, no dialogs)
+  Like a real host, it sends the open tool's result to the app (ui/notifications/tool-result).
+-->
+<style>body{margin:0;font-family:system-ui}iframe{width:100%;height:900px;border:0}#log{display:none}</style>
+<iframe id="app" title="Studio"></iframe>
+<pre id="log"></pre>
+<script type="module">
+const key = '__E2E_KEY__'; // filled in by e2e-server.ts (throw-away key for this run)
+const log = (window.__hostLog = []);
+let id = 0;
+async function rpc(method, params) {
+  const r = await fetch('/api/v1/editor', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', Authorization: `Bearer ${key}` }, body: JSON.stringify({ jsonrpc: '2.0', id: ++id, method, params }) });
+  return (await r.json()).result;
+}
+const q = new URLSearchParams(location.search);
+const admin = q.get('app') === 'admin';
+const input = admin ? (q.get('screen') ? { screen: q.get('screen') } : {}) : { tab: 'checks' };
+const opened = await rpc('tools/call', { name: admin ? 'open_be_guided_admin' : 'open_be_guided_studio', arguments: input });
+const res = await rpc('resources/read', { uri: admin ? 'ui://be-guided/admin.html' : 'ui://be-guided/studio.html' });
+const frame = document.getElementById('app');
+if (q.get('sandbox') === 'strict') frame.setAttribute('sandbox', 'allow-scripts allow-forms');
+const ipc = q.get('ipc');
+window.__calls = [];
+let refused = 0;
+let displayMode = q.get('display') === 'fullscreen' ? 'fullscreen' : 'inline';
+window.__displayMode = () => displayMode;
+window.addEventListener('message', async (ev) => {
+  if (ev.source !== frame.contentWindow) return;
+  const m = ev.data;
+  if (m?.pvDebug) { (window.__errors ??= []).push(m.pvDebug); return; }
+  log.push(m.method ?? 'response');
+  const reply = (result) => frame.contentWindow.postMessage({ jsonrpc: '2.0', id: m.id, result }, '*');
+  if (m.method === 'ui/initialize') reply({ protocolVersion: '2026-01-26', hostInfo: { name: 'fake-host', version: '1' }, hostCapabilities: {}, hostContext: { theme: 'dark', displayMode } });
+  else if (m.method === 'ui/request-display-mode') { displayMode = m.params?.mode === 'inline' ? 'inline' : displayMode; reply({ mode: displayMode }); }
+  else if (m.method === 'tools/call' && displayMode !== 'inline') { refused++; frame.contentWindow.postMessage({ jsonrpc: '2.0', id: m.id, error: { code: -32603, message: 'IPC not available for MCP tool call' } }, '*'); }
+  else if (m.method === 'tools/call' && (ipc === 'broken' || (ipc === 'flaky' && refused === 0))) { refused++; frame.contentWindow.postMessage({ jsonrpc: '2.0', id: m.id, error: { code: -32603, message: 'IPC not available for MCP tool call' } }, '*'); }
+  else if (m.method === 'tools/call') { window.__calls.push(m.params.name + ' ' + (m.params.arguments?.method ?? '') + ' ' + (m.params.arguments?.path ?? '')); reply(await rpc('tools/call', m.params)); }
+  else if (m.method === 'ui/notifications/size-changed') { frame.style.height = m.params.height + 'px'; }
+  else if (m.method === 'ui/open-link') { log.push('open-link ' + m.params.url); reply({}); }
+  else if (m.method === 'ui/notifications/initialized') {
+    frame.contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-input', params: { arguments: input } }, '*');
+    frame.contentWindow.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/tool-result', params: opened }, '*');
+  }
+  window.__refused = refused;
+});
+// ?debug=1 passes the app's script errors up to window.__errors (for checks only).
+const debug = q.get('debug') ? '<script>addEventListener("error",(e)=>parent.postMessage({pvDebug:String(e.message)},"*"));addEventListener("unhandledrejection",(e)=>parent.postMessage({pvDebug:String(e.reason && e.reason.stack || e.reason)},"*"));setTimeout(()=>parent.postMessage({pvDebug:"text:"+document.body.innerText.slice(0,200)},"*"),4000);<\/script>' : '';
+frame.srcdoc = debug + res.contents[0].text;
+</script>
