@@ -2,6 +2,8 @@
 
 **User guides for your apps, written and kept up to date with the AI you already use.**
 
+https://github.com/user-attachments/assets/6afbcc0c-0261-40e1-b097-2c66552c04d1
+
 Be Guided gives you a public guide site, a private admin, and connectors so Claude, ChatGPT and Codex can both **read** your guides and **write** them. You host it on your own Cloudflare account, free for most teams. You don't need an AI API key: you use your own Claude or ChatGPT subscription.
 
 > **See it working:** the Be Guided user guide is built with Be Guided itself.
