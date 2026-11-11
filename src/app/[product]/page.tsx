@@ -39,9 +39,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     <>
       <SiteHeader product={{ slug: product.slug, name: product.name }} />
       <main>
-        <section className={hero.images.length ? 'hero hero--product' : 'hero'}>
+        <section className={hero.images.length || hero.video ? 'hero hero--product' : 'hero'}>
           <div className="container">
-            <div className={hero.images.length ? 'hero__grid' : undefined}>
+            <div className={hero.images.length || hero.video ? 'hero__grid' : undefined}>
               <div className="hero__inner">
                 <span className="hero__eyebrow">User guide</span>
                 <h1 className="hero__title">{product.name}</h1>

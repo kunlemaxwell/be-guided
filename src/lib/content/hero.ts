@@ -11,6 +11,15 @@ export interface ProductHero {
   images: string[];
   /** Short label for the window bar, e.g. "Performance". */
   label: string;
+  /** A film for the product's own hero (site addresses), when product.json names one. */
+  video?: { src: string; poster?: string };
+}
+
+function heroVideo(product: Product): ProductHero['video'] {
+  const v = product.hero?.video;
+  if (!v) return undefined;
+  const at = (f: string) => `/_content/${product.slug}/${f}`;
+  return { src: at(v.src), ...(v.poster ? { poster: at(v.poster) } : {}) };
 }
 
 /**
@@ -20,7 +29,8 @@ export interface ProductHero {
  */
 export function productHero(product: Product): ProductHero {
   const chosen = (product.hero?.images ?? []).map((src) => `/_content/${product.slug}/${src}`);
-  if (chosen.length) return { images: chosen.slice(0, 2), label: product.hero?.label ?? product.name };
+  const video = heroVideo(product);
+  if (chosen.length) return { images: chosen.slice(0, 2), label: product.hero?.label ?? product.name, ...(video ? { video } : {}) };
   const picked: { src: string; module: string; label: string }[] = [];
   for (const m of product.modules) {
     for (const pg of m.pages) {
@@ -39,7 +49,7 @@ export function productHero(product: Product): ProductHero {
       if (picked.length === 2) break;
     }
   }
-  return { images: picked.map((x) => x.src), label: product.hero?.label ?? picked[0]?.label ?? product.name };
+  return { images: picked.map((x) => x.src), label: product.hero?.label ?? picked[0]?.label ?? product.name, ...(video ? { video } : {}) };
 }
 
 /** The three floating labels on a product's hero picture. */

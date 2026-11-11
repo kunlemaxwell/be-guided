@@ -92,7 +92,10 @@ function fromForm(meta: ProductJson, f: FormState): Record<string, unknown> {
   for (const e of ENVIRONMENTS) if (f.envs[e.key].trim()) environments[e.key] = { appUrl: f.envs[e.key].trim() };
   if (Object.keys(environments).length > 0 || meta.environments !== undefined) next.environments = environments;
   else delete next.environments;
-  if (f.heroImages.length > 0) next.hero = { ...((meta.hero as object | undefined) ?? {}), images: f.heroImages };
+  const heroRest = { ...((meta.hero as Record<string, unknown> | undefined) ?? {}) };
+  delete heroRest.images;
+  if (f.heroImages.length > 0) next.hero = { ...heroRest, images: f.heroImages };
+  else if (Object.keys(heroRest).length > 0) next.hero = heroRest; // keeps a hero film or label
   else delete next.hero;
   return next;
 }

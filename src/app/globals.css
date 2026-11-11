@@ -936,3 +936,7 @@ html[data-theme='warm'] .module-grid--compact { grid-template-columns: repeat(au
 .area-column li a { display: block; padding: 4px 0; font-size: 14px; color: var(--fg-2); text-decoration: none; }
 .area-column li a:hover { color: var(--link); text-decoration: underline; }
 @media (max-width: 760px) { .area-columns { grid-template-columns: 1fr !important; } }
+
+/* Product hero film: plays in the front window, 16:9, above the back picture. */
+.hero-collage__video { display: block; width: 100%; aspect-ratio: 16 / 9; background: #050a14; }
+.hero-collage--video .hero-collage__front { z-index: 1; }

@@ -128,8 +128,21 @@ export const productSchema = z.object({
    * Hero pictures for this product's landing page and its home-page slide:
    * screenshots inside the product, e.g. "sales/images/invoice-list.webp"
    * (module/images/file). Left out: the first screenshots of its guides.
+   * `video` (module/media/file.mp4) plays in the product's own hero instead
+   * of the front picture, muted with controls so readers can turn the sound on.
    */
-  hero: z.object({ images: z.array(z.string().regex(/^[a-z0-9-]+\/(images)\/[A-Za-z0-9._-]+$/)).max(4), label: z.string().max(60).optional() }).optional(),
+  hero: z
+    .object({
+      images: z.array(z.string().regex(/^[a-z0-9-]+\/(images)\/[A-Za-z0-9._-]+$/)).max(4).default([]),
+      label: z.string().max(60).optional(),
+      video: z
+        .object({
+          src: z.string().regex(/^[a-z0-9-]+\/media\/[A-Za-z0-9._-]+\.(?:mp4|webm)$/),
+          poster: z.string().regex(/^[a-z0-9-]+\/(?:media|images)\/[A-Za-z0-9._-]+\.(?:webp|png|jpg)$/).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   source: z
     .object({
       repos: z.array(

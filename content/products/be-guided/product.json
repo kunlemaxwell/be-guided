@@ -25,6 +25,10 @@
       "getting-started/images/admin-pages.webp",
       "reading-the-guide/images/site-connect-ai.webp",
       "writing-guides/images/admin-product.webp"
-    ]
+    ],
+    "video": {
+      "src": "getting-started/media/be-guided-launch.mp4",
+      "poster": "getting-started/media/be-guided-launch-poster.webp"
+    }
   }
 }
