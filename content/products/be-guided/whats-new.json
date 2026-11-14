@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "slug": "whats-new-page",
+      "date": "2026-11-14",
+      "title": "What's new",
+      "summary": "A page that lists what was released, by date, module or user, with a link to how to use each one.",
+      "detail": "Days are open to start with and can be folded. Choose View by to group the list by date, module, user, or module and user. Select More for a short longer text and How to use for the guide page.",
+      "module": "reading-the-guide",
+      "where": "What's new",
+      "audience": ["Everyone"],
+      "kind": "new"
+    },
+    {
+      "slug": "user-journeys",
+      "date": "2026-11-14",
+      "title": "User journeys",
+      "summary": "Readers pick the kind of user they are and follow the guides they need, in order.",
+      "detail": "Nothing is hidden: Everyone still shows the whole guide. Journeys are written from the app's own user types.",
+      "module": "writing-guides",
+      "audience": ["Reader", "Guide writer"],
+      "kind": "new",
+      "guide": "writing-guides/set-up-user-journeys"
+    },
+    {
+      "slug": "checks-from-each-pages-date",
+      "date": "2026-11-14",
+      "title": "Smarter update checks",
+      "summary": "A check compares each page with everything that changed after its own last update, and keeps findings nobody applied yet.",
+      "module": "writing-with-ai",
+      "audience": ["Guide writer", "Site owner"],
+      "kind": "improved",
+      "guide": "writing-with-ai/schedule-update-checks"
+    },
+    {
+      "slug": "admin-locked-during-setup",
+      "date": "2026-11-11",
+      "title": "Admin locked during setup",
+      "summary": "Setup now locks the admin behind Cloudflare Access for you.",
+      "module": "getting-started",
+      "audience": ["Site owner"],
+      "kind": "improved",
+      "guide": "getting-started/install-be-guided"
+    }
+  ]
+}

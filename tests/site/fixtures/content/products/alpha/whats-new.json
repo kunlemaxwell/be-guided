@@ -1,0 +1,8 @@
+{
+  "entries": [
+    { "slug": "older-feature", "date": "2026-11-06", "title": "Older feature", "summary": "Something released earlier.", "module": "sales", "audience": ["Seller"], "guide": "sales/open-page" },
+    { "slug": "newer-feature", "date": "2026-11-13", "title": "Newer feature", "summary": "Something released later.", "detail": "A little more about it.", "module": "sales", "where": "Dashboard", "audience": ["Everyone"], "kind": "improved", "guide": "sales/open-page" },
+    { "slug": "same-day-b", "date": "2026-11-13", "title": "Beta", "summary": "Second on the same day.", "module": "sales", "audience": ["Seller", "Manager"], "guide": "sales/draft-page" },
+    { "slug": "no-guide", "date": "2026-11-13", "title": "Alpha", "summary": "No guide page yet.", "module": "sales" }
+  ]
+}

@@ -1,37 +1,23 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { getAllPages, pageHref } from '@/lib/content/load';
+import { getAllWhatsNew } from '@/lib/content/whats-new';
 import { SiteFooter, SiteHeader } from '@/components/SiteHeader';
+import { WhatsNewView } from '@/components/whatsnew/WhatsNewView';
 
-export const metadata: Metadata = { title: "What's new" };
+export const metadata: Metadata = { title: "What's new", description: 'What was released, by date, module or user, with a link to how to use each one.' };
 
 /**
- * PROTOTYPE: lists pages that carry a `changed` note. Step 2 replaces this
- * with release entries (content/products/<p>/changelog/*.md) that each link
- * to the guide pages they updated.
+ * What's new: release entries from content/products/<product>/whats-new.json.
+ * A date is the day readers got the feature (the day it reached production).
  */
 export default function ChangelogPage() {
-  const changed = getAllPages()
-    .filter((p) => p.changed)
-    .sort((a, b) => (b.changed?.date ?? '').localeCompare(a.changed?.date ?? ''));
+  const entries = getAllWhatsNew();
   return (
     <>
       <SiteHeader />
-      <main className="container" style={{ paddingTop: 48, paddingBottom: 96, maxWidth: 860 }}>
+      <main className="container" style={{ paddingTop: 48, paddingBottom: 96, maxWidth: 960 }}>
         <h1 className="doc-title">What&apos;s new</h1>
-        <p className="doc-lead">Every change to the guides, with links to the pages that were updated.</p>
-        {changed.length === 0 ? (
-          <p style={{ marginTop: 32, color: 'var(--muted)' }}>No changes recorded yet.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0, marginTop: 32 }}>
-            {changed.map((p) => (
-              <li key={p.id} style={{ borderTop: 'var(--line-w, 1px) solid var(--line)', padding: '16px 0' }}>
-                <Link href={pageHref(p)}>{p.title}</Link>
-                <div style={{ color: 'var(--muted)', fontSize: 14 }}>{p.changed?.date} · {p.changed?.note}</div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <p className="doc-lead">What we released, newest first. Select How to use to see the feature in the guide, with its screenshots and steps.</p>
+        <WhatsNewView entries={entries} />
       </main>
       <SiteFooter />
     </>

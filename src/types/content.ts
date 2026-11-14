@@ -303,3 +303,43 @@ export interface Journey extends Omit<JourneyMeta, 'steps'> {
   productSlug: string;
   steps: { id: string; title: string; summary: string; href: string; moduleTitle: string; why?: string }[];
 }
+
+/**
+ * What's new: what was released, one entry per feature, stored in
+ * content/products/<product>/whats-new.json. The date is the day readers got it
+ * (the day it reached production), not the day it was built. Entries are shown
+ * grouped by date, module or user, newest first.
+ */
+export const whatsNewEntrySchema = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'use lower-case words joined by dashes'),
+  /** The day it reached production, YYYY-MM-DD. */
+  date: isoDate,
+  /** The feature's name, for example "Audit Logs". */
+  title: z.string().trim().min(2).max(60),
+  /** One line a reader can scan: what they can now do. */
+  summary: z.string().trim().min(5).max(140),
+  /** Optional longer text, two or three lines at most, shown under "More". */
+  detail: z.string().trim().max(320).optional(),
+  /** Module slug of the product, for example "settings" or "deals". */
+  module: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  /** What readers call the place, when it differs from the module's title (for example "Dashboard"). Shown as the module tag and group. */
+  where: z.string().trim().min(1).max(40).optional(),
+  /** Who it concerns, in the app's own user types. "Everyone" when it is for all. */
+  audience: z.array(z.string().trim().min(1).max(60)).min(1).default(['Everyone']),
+  /** New feature or an improvement to something that existed. */
+  kind: z.enum(['new', 'improved']).default('new'),
+  /** The guide page that shows how to use it: "module/page" or "product/module/page". */
+  guide: z.string().min(1).optional(),
+});
+export const whatsNewFileSchema = z.object({ entries: z.array(whatsNewEntrySchema).default([]) });
+export type WhatsNewEntryMeta = z.infer<typeof whatsNewEntrySchema>;
+
+/** An entry as readers see it: module named, guide link resolved to a page that exists in this build. */
+export interface WhatsNewEntry extends Omit<WhatsNewEntryMeta, 'module' | 'guide' | 'where'> {
+  productSlug: string;
+  productName: string;
+  moduleSlug: string;
+  moduleTitle: string;
+  /** Link to the guide page; absent when the page is missing, private or a draft in this build. */
+  guideHref?: string;
+}
