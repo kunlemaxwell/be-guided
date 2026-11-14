@@ -4,12 +4,27 @@
       "slug": "whats-new-page",
       "date": "2026-11-14",
       "title": "What's new",
-      "summary": "A page that lists what was released, by date, module or user, with a link to how to use each one.",
-      "detail": "Days are open to start with and can be folded. Choose View by to group the list by date, module, user, or module and user. Select More for a short longer text and How to use for the guide page.",
+      "summary": "A page per product that lists what was released, by date, module, user or product, with filters and a link to how to use each one.",
+      "detail": "Inside a product, What's new shows only that product. From the main page, choose All products or one product. Use View by to group the list and Filter to narrow it. Select More for a short longer text and How to use for the guide page.",
       "module": "reading-the-guide",
       "where": "What's new",
-      "audience": ["Everyone"],
+      "audience": [
+        "Everyone"
+      ],
       "kind": "new"
+    },
+    {
+      "slug": "guide-me",
+      "date": "2026-11-14",
+      "title": "Guide me",
+      "summary": "Each product page has a Guide me button that opens the user chooser, with Everyone first.",
+      "detail": "The product page hero also has the search box and a What's new button, and floating labels use icons that fit the product.",
+      "module": "reading-the-guide",
+      "audience": [
+        "Everyone"
+      ],
+      "kind": "new",
+      "guide": "reading-the-guide/find-a-guide"
     },
     {
       "slug": "user-journeys",
@@ -18,7 +33,10 @@
       "summary": "Readers pick the kind of user they are and follow the guides they need, in order.",
       "detail": "Nothing is hidden: Everyone still shows the whole guide. Journeys are written from the app's own user types.",
       "module": "writing-guides",
-      "audience": ["Reader", "Guide writer"],
+      "audience": [
+        "Reader",
+        "Guide writer"
+      ],
       "kind": "new",
       "guide": "writing-guides/set-up-user-journeys"
     },
@@ -28,7 +46,10 @@
       "title": "Smarter update checks",
       "summary": "A check compares each page with everything that changed after its own last update, and keeps findings nobody applied yet.",
       "module": "writing-with-ai",
-      "audience": ["Guide writer", "Site owner"],
+      "audience": [
+        "Guide writer",
+        "Site owner"
+      ],
       "kind": "improved",
       "guide": "writing-with-ai/schedule-update-checks"
     },
@@ -38,7 +59,9 @@
       "title": "Admin locked during setup",
       "summary": "Setup now locks the admin behind Cloudflare Access for you.",
       "module": "getting-started",
-      "audience": ["Site owner"],
+      "audience": [
+        "Site owner"
+      ],
       "kind": "improved",
       "guide": "getting-started/install-be-guided"
     }

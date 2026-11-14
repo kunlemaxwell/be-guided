@@ -1,4 +1,5 @@
-import type { ProductHero } from '@/lib/content/hero';
+import type { HeroChip, ProductHero } from '@/lib/content/hero';
+import { HeroIcon } from '@/components/Icons';
 
 /**
  * A product's own hero picture: two of its real screens layered, with floating
@@ -6,7 +7,7 @@ import type { ProductHero } from '@/lib/content/hero';
  * When the product has a hero film, it plays in the front window instead
  * (muted and looping, with controls so readers can turn the sound on).
  */
-export function ProductCollage({ hero, productName, chips }: { hero: ProductHero; productName: string; chips: string[] }) {
+export function ProductCollage({ hero, productName, chips }: { hero: ProductHero; productName: string; chips: HeroChip[] }) {
   const [first, second] = hero.images;
   const video = hero.video;
   const front = video ? null : first;
@@ -45,9 +46,9 @@ export function ProductCollage({ hero, productName, chips }: { hero: ProductHero
       {video
         ? null
         : chips.slice(0, 3).map((c, i) => (
-            <span key={c} className={`hero-chip hero-chip--${'abc'[i]}`}>
-              {i === 0 ? <b>1</b> : null}
-              {c}
+            <span key={c.text} className={`hero-chip hero-chip--${'abc'[i]}`}>
+              <b><HeroIcon name={c.icon} size={14} /></b>
+              {c.text}
             </span>
           ))}
     </div>

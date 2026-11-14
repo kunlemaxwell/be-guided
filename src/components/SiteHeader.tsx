@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSite } from '@/lib/content/load';
 import { getJourneys } from '@/lib/content/journeys';
+import { whatsNewHref } from '@/lib/whats-new/href';
 import { ModeToggle } from './ModeToggle';
 import { ProductsMenu } from './ProductsMenu';
 import { SiteSearch } from './search/SiteSearch';
@@ -32,7 +33,7 @@ export function SiteHeader({ product }: Props) {
         <nav className="header-nav" aria-label="Main">
           <ProductsMenu current={product?.slug} />
           {product && hasJourneys ? <Link href={`/${product.slug}/journeys/`}>User journeys</Link> : null}
-          <Link href="/changelog/">What&apos;s new</Link>
+          <Link href={whatsNewHref(product?.slug)}>What&apos;s new</Link>
           <ModeToggle />
         </nav>
       </div>

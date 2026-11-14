@@ -10,6 +10,8 @@ import { heroChips, productHero } from '@/lib/content/hero';
 import { ProductCollage } from '@/components/hero/ProductCollage';
 import { ProductLinkButton } from '@/components/ProductLinkButton';
 import { getJourneys } from '@/lib/content/journeys';
+import { HeroSearchButton } from '@/components/search/HeroSearchButton';
+import { whatsNewHref } from '@/lib/whats-new/href';
 import { JourneyPicker } from '@/components/journeys/JourneyPicker';
 
 type Params = { product: string };
@@ -46,12 +48,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <div className="container">
             <div className={hero.images.length || hero.video ? 'hero__grid' : undefined}>
               <div className="hero__inner">
-                <span className="hero__eyebrow">User guide</span>
                 <h1 className="hero__title">{product.name}</h1>
                 <p className="hero__lead">{product.summary}</p>
+                <HeroSearchButton />
                 <div className="hero__actions">
-                  <Link className="btn btn--primary" href={`/${product.slug}/configuration-center/`}>
-                    Configuration center: what to set up, in order →
+                  {journeys.length > 0 ? <Link className="btn btn--primary" href={`/${product.slug}/journeys/`}>Guide me</Link> : null}
+                  <Link className="btn" href={whatsNewHref(product.slug)}>What&apos;s new</Link>
+                  <Link className="btn" href={`/${product.slug}/configuration-center/`}>
+                    Configuration center →
                   </Link>
                   <ProductLinkButton slug={product.slug} name={product.name} />
                 </div>

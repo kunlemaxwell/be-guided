@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { whatsNewHref } from '@/lib/whats-new/href';
 import { groupBySection } from '@/lib/content/sections';
 import type { Metadata } from 'next';
 import { orPlaceholder } from '@/lib/static-params';
@@ -131,7 +132,7 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
                 {page.audience ? <span>For {page.audience.toLowerCase()}</span> : null}
                 <span>Updated {formatDate(page.updated)}</span>
                 {page.changed ? (
-                  <Link className="badge-changed" href="/changelog/" title={page.changed.note}>Changed in latest release</Link>
+                  <Link className="badge-changed" href={whatsNewHref(page.productSlug)} title={page.changed.note}>Changed in latest release</Link>
                 ) : null}
               </p>
 

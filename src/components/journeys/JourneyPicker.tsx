@@ -15,6 +15,8 @@ interface Props {
   product: string;
   productName: string;
   journeys: PickerJourney[];
+  /** Open the chooser straight away (the "Guide me" button), even when a choice was made before. */
+  startOpen?: boolean;
 }
 
 const INITIAL_STEPS = 8;
@@ -25,9 +27,9 @@ const INITIAL_STEPS = 8;
  * the choice in this browser. Pick one or several user journeys; the page then
  * shows the reading order for them. "Everyone" keeps the whole guide.
  */
-export function JourneyPicker({ product, productName, journeys }: Props) {
+export function JourneyPicker({ product, productName, journeys, startOpen = false }: Props) {
   const [choice, setChoice] = useState<JourneyChoice | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startOpen);
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -72,6 +74,12 @@ export function JourneyPicker({ product, productName, journeys }: Props) {
           <div className="journeys__head">
             <h2 id="journeys-h" className="journeys__title">Which user are you?</h2>
             <p className="journeys__lead">Pick the ones that fit you and we will show you what you need, in a good order. You can pick more than one, and change this any time. The whole guide stays open.</p>
+          </div>
+          <div className="journeys__everyone">
+            <button type="button" className="journey-chip journey-chip--everyone" aria-pressed={chosen.length === 0} onClick={() => { save([]); setEditing(false); }}>
+              <span className="journey-chip__mark" aria-hidden="true">{chosen.length === 0 ? '✓' : ''}</span>
+              Everyone: show me all the features
+            </button>
           </div>
           <div className="journeys__groups">
             {groups.map(([group, items]) => (

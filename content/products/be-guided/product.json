@@ -29,6 +29,20 @@
     "video": {
       "src": "getting-started/media/be-guided-launch.mp4",
       "poster": "getting-started/media/be-guided-launch-poster.webp"
-    }
+    },
+    "chips": [
+      {
+        "icon": "file",
+        "text": "Guides for every app"
+      },
+      {
+        "icon": "settings",
+        "text": "Updated with your AI"
+      },
+      {
+        "icon": "shield",
+        "text": "You approve changes"
+      }
+    ]
   }
 }

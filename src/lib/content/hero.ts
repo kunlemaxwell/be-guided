@@ -1,4 +1,6 @@
-import type { GuidePage, Product } from '@/types/content';
+import type { GuidePage, HeroIconName, Product } from '@/types/content';
+
+export interface HeroChip { icon: HeroIconName; text: string }
 
 /** First screenshot of a page, as a site address (images live under /_content). */
 export function firstImage(page: GuidePage): string | null {
@@ -52,13 +54,24 @@ export function productHero(product: Product): ProductHero {
   return { images: picked.map((x) => x.src), label: product.hero?.label ?? picked[0]?.label ?? product.name, ...(video ? { video } : {}) };
 }
 
-/** The three floating labels on a product's hero picture. */
-export function heroChips(product: Product, hero: ProductHero): string[] {
+/**
+ * The three floating labels on a product's hero picture: the product's own
+ * (product.json hero.chips, with icons that fit it), else generic ones.
+ */
+export function heroChips(product: Product, hero: ProductHero): HeroChip[] {
+  if (product.hero?.chips?.length) return product.hero.chips;
+  return genericChips(product, hero);
+}
+
+/** Generic labels with generic icons, for the home page and for products that set none. */
+export function genericChips(product: Product, hero: ProductHero): HeroChip[] {
   const pages = product.modules.flatMap((m) => m.pages);
   return [
-    hero.label !== product.name ? `Open ${hero.label}` : 'Follow the steps',
-    pages.some((p) => p.video) ? '▶ Click-through videos' : `${pages.length} guides, real screens`,
-    '✓ Set up in the right order',
+    { icon: 'list', text: hero.label !== product.name ? `Open ${hero.label}` : 'Follow the steps' },
+    pages.some((p) => p.video) ? { icon: 'play', text: 'Click-through videos' } : { icon: 'file', text: `${pages.length} guides, real screens` },
+    { icon: 'check', text: 'Set up in the right order' },
   ];
 }
 
+/** Most windows ever stacked on the home page, however many products the site has. */
+export const STACK_MAX = 5;

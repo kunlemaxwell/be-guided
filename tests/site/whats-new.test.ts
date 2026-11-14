@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { countChanges, formatDate, groupEntries } from '../../src/lib/whats-new/group';
+import { EMPTY_FILTERS, applyFilters, countOption, facetValues, formatDate, groupEntries, hasFilters, slugify, viewOptions } from '../../src/lib/whats-new/group';
 import { whatsNewEntrySchema } from '../../src/types/content';
+import { whatsNewAllHref, whatsNewHref } from '../../src/lib/whats-new/href';
 
 const FIXTURE = path.resolve(__dirname, 'fixtures/content');
 const saved = { c: process.env.CONTENT_DIR, e: process.env.NEXT_PUBLIC_HELP_ENV };
@@ -60,6 +61,10 @@ describe("What's new: the entry rules", () => {
   it('accepts a complete entry', () => {
     expect(whatsNewEntrySchema.safeParse(ok).success).toBe(true);
   });
+  it('knows three kinds: new, improved and a bug fix', () => {
+    for (const kind of ['new', 'improved', 'fixed']) expect(whatsNewEntrySchema.safeParse({ ...ok, kind }).success).toBe(true);
+    expect(whatsNewEntrySchema.safeParse({ ...ok, kind: 'removed' }).success).toBe(false);
+  });
   it('wants a real date', () => {
     expect(whatsNewEntrySchema.safeParse({ ...ok, date: '6 Nov 2026' }).success).toBe(false);
   });
@@ -71,12 +76,15 @@ describe("What's new: the entry rules", () => {
   });
 });
 
-describe("What's new: grouping", () => {
+describe("What's new: grouping and filters", () => {
+  const base = { summary: 's', productSlug: 'p', productName: 'P' };
   const entries = [
-    { slug: 'a', date: '2026-11-13', title: 'A', summary: 's', productSlug: 'p', productName: 'P', moduleSlug: 'deals', moduleTitle: 'Deals', audience: ['Seller', 'Manager'], kind: 'new' as const },
-    { slug: 'b', date: '2026-11-13', title: 'B', summary: 's', productSlug: 'p', productName: 'P', moduleSlug: 'settings', moduleTitle: 'Settings', audience: ['Everyone'], kind: 'new' as const },
-    { slug: 'c', date: '2026-11-06', title: 'C', summary: 's', productSlug: 'p', productName: 'P', moduleSlug: 'deals', moduleTitle: 'Deals', audience: ['Seller'], kind: 'improved' as const },
+    { ...base, slug: 'a', date: '2026-11-13', title: 'A', moduleSlug: 'deals', moduleTitle: 'Deals', audience: ['Seller', 'Manager'], kind: 'new' as const },
+    { ...base, slug: 'b', date: '2026-11-13', title: 'B', moduleSlug: 'settings', moduleTitle: 'Settings', audience: ['Everyone'], kind: 'new' as const },
+    { ...base, slug: 'c', date: '2026-11-06', title: 'C', moduleSlug: 'deals', moduleTitle: 'Deals', audience: ['Seller'], kind: 'improved' as const },
+    { ...base, slug: 'd', date: '2026-11-06', title: 'D', moduleSlug: 'reports', moduleTitle: 'Reports', audience: ['Manager'], kind: 'fixed' as const },
   ];
+  const slugs = (list: { slug: string }[]) => list.map((e) => e.slug);
 
   it('formats a date by hand', () => {
     expect(formatDate('2026-11-06')).toBe('6 Nov 2026');
@@ -86,35 +94,99 @@ describe("What's new: grouping", () => {
   it('groups by day, newest day first', () => {
     const g = groupEntries(entries, 'date');
     expect(g.map((x) => x.label)).toEqual(['13 Nov 2026', '6 Nov 2026']);
-    expect(g[0]?.entries.map((e) => e.slug)).toEqual(['a', 'b']);
+    expect(slugs(g[0]!.entries)).toEqual(['a', 'b']);
   });
 
   it('groups by module, newest module first, entries newest first', () => {
     const g = groupEntries(entries, 'module');
-    expect(g.map((x) => x.label)).toEqual(['Deals', 'Settings']);
-    expect(g[0]?.entries.map((e) => e.slug)).toEqual(['a', 'c']);
+    expect(g.map((x) => x.label)).toEqual(['Deals', 'Settings', 'Reports']);
+    expect(slugs(g[0]!.entries)).toEqual(['a', 'c']);
   });
 
   it('lists an entry under each kind of user it is for, "Everyone" first', () => {
     const g = groupEntries(entries, 'user');
     expect(g.map((x) => x.label)).toEqual(['Everyone', 'Manager', 'Seller']);
-    expect(g.find((x) => x.label === 'Seller')?.entries.map((e) => e.slug)).toEqual(['a', 'c']);
-    expect(g.find((x) => x.label === 'Manager')?.entries.map((e) => e.slug)).toEqual(['a']);
+    expect(slugs(g.find((x) => x.label === 'Seller')!.entries)).toEqual(['a', 'c']);
+    expect(slugs(g.find((x) => x.label === 'Manager')!.entries)).toEqual(['a', 'd']);
   });
 
-  it('counts an entry once under a module even when it is listed under several users', () => {
-    const deals = groupEntries(entries, 'module-user').find((x) => x.label === 'Deals');
-    expect(deals && countChanges(deals)).toBe(2);
-    const seller = groupEntries(entries, 'user').find((x) => x.label === 'Seller');
-    expect(seller && countChanges(seller)).toBe(2);
+  it('offers dates newest first, modules and users A to Z, and never "Everyone" as a user', () => {
+    const v = facetValues(entries);
+    expect(v.dates).toEqual(['2026-11-13', '2026-11-06']);
+    expect(v.modules).toEqual(['Deals', 'Reports', 'Settings']);
+    expect(v.users).toEqual(['Manager', 'Seller']);
   });
 
-  it('nests users inside modules', () => {
-    const g = groupEntries(entries, 'module-user');
-    expect(g.map((x) => x.label)).toEqual(['Deals', 'Settings']);
-    expect(g[0]?.children.map((x) => x.label)).toEqual(['Manager', 'Seller']);
-    expect(g[0]?.children.find((x) => x.label === 'Seller')?.entries.map((e) => e.slug)).toEqual(['a', 'c']);
-    expect(g[0]?.entries).toEqual([]);
+  it('shows everything when nothing is ticked', () => {
+    expect(hasFilters(EMPTY_FILTERS)).toBe(false);
+    expect(slugs(applyFilters(entries, EMPTY_FILTERS))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('takes several ticks in one menu as "any of", and menus together as "and"', () => {
+    expect(slugs(applyFilters(entries, { ...EMPTY_FILTERS, modules: ['Deals', 'Reports'] }))).toEqual(['a', 'c', 'd']);
+    expect(slugs(applyFilters(entries, { ...EMPTY_FILTERS, modules: ['Deals', 'Reports'], types: ['new', 'fixed'] }))).toEqual(['a', 'd']);
+    expect(slugs(applyFilters(entries, { ...EMPTY_FILTERS, dates: ['2026-11-06'], types: ['improved'] }))).toEqual(['c']);
+  });
+
+  it('keeps what is for everyone when a user is ticked', () => {
+    expect(slugs(applyFilters(entries, { ...EMPTY_FILTERS, users: ['Seller'] }))).toEqual(['a', 'b', 'c']);
+    expect(slugs(applyFilters(entries, { ...EMPTY_FILTERS, users: ['Seller', 'Manager'] }))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('counts what an option would show given the other menus, not its own', () => {
+    const f = { ...EMPTY_FILTERS, modules: ['Deals'], types: ['new' as const] };
+    expect(countOption(entries, f, 'modules', (e) => e.moduleTitle === 'Reports')).toBe(0);
+    expect(countOption(entries, f, 'modules', (e) => e.moduleTitle === 'Settings')).toBe(1);
+    expect(countOption(entries, f, 'types', (e) => e.kind === 'improved')).toBe(1);
+  });
+
+  it('changing the view never changes what passes the filters', () => {
+    const f = { ...EMPTY_FILTERS, types: ['new' as const] };
+    const count = (view: 'date' | 'module' | 'user') => new Set(groupEntries(applyFilters(entries, f), view).flatMap((g) => slugs(g.entries))).size;
+    expect([count('date'), count('module'), count('user')]).toEqual([2, 2, 2]);
+  });
+
+  it('filters by product: none ticked shows every product, ticked ones show only theirs', () => {
+    const two = [
+      { ...entries[0]!, productSlug: 'crm', productName: 'CRM' },
+      { ...entries[1]!, productSlug: 'wbiz', productName: 'WbizManager' },
+      { ...entries[2]!, productSlug: 'crm', productName: 'CRM' },
+    ];
+    expect(slugs(applyFilters(two, EMPTY_FILTERS))).toEqual(['a', 'b', 'c']);
+    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['crm'] }))).toEqual(['a', 'c']);
+    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['crm', 'wbiz'] }))).toEqual(['a', 'b', 'c']);
+    expect(countOption(two, { ...EMPTY_FILTERS, modules: ['Settings'] }, 'products', (e) => e.productSlug === 'crm')).toBe(0);
+  });
+
+  it('offers Product as a way to view only when the page covers every product', () => {
+    expect(viewOptions(true).map((o) => o.value)).toEqual(['product', 'date', 'module', 'user']);
+    expect(viewOptions(false).map((o) => o.value)).toEqual(['date', 'module', 'user']);
+  });
+
+  it('groups by product, the product with the newest change first', () => {
+    const two = [
+      { ...entries[2]!, productSlug: 'crm', productName: 'CRM' },
+      { ...entries[0]!, productSlug: 'wbiz', productName: 'WbizManager' },
+      { ...entries[1]!, productSlug: 'wbiz', productName: 'WbizManager' },
+    ];
+    const g = groupEntries(two, 'product');
+    expect(g.map((x) => x.label)).toEqual(['WbizManager', 'CRM']);
+    expect(slugs(g[0]!.entries)).toEqual(['a', 'b']);
+  });
+
+  it('makes a safe anchor name', () => {
+    expect(slugify('Companies and contacts')).toBe('companies-and-contacts');
+    expect(slugify('13 Nov 2026')).toBe('13-nov-2026');
+  });
+});
+
+describe("What's new: where the link goes", () => {
+  it("opens the product's own page from inside a product, and the all-products page from the main page", () => {
+    expect(whatsNewHref('crm-business-development')).toBe('/crm-business-development/whats-new/');
+    expect(whatsNewHref('wbizmanager')).toBe('/wbizmanager/whats-new/');
+    expect(whatsNewHref()).toBe('/changelog/');
+    expect(whatsNewHref('')).toBe('/changelog/');
+    expect(whatsNewAllHref).toBe('/changelog/all/');
   });
 });
 

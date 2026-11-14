@@ -8,8 +8,8 @@ import { AddToAi } from '@/components/AddToAi';
 import { connectorUrl } from '@/lib/api/config';
 import { moduleGroups } from '@/lib/content/areas';
 import { hasWideImage, mixedShowcase } from '@/lib/content/showcase';
-import { firstImage, heroChips, productHero } from '@/lib/content/hero';
-import { ProductCarousel, type CarouselSlide } from '@/components/hero/ProductCarousel';
+import { STACK_MAX, firstImage, genericChips, heroChips, productHero } from '@/lib/content/hero';
+import { HeroStack, type StackSlide } from '@/components/hero/HeroStack';
 import { ProductCollage } from '@/components/hero/ProductCollage';
 
 /** Modules shown per product before "Show more". */
@@ -31,10 +31,19 @@ export default function HomePage() {
   const heroCfg = site.hero;
   const chosen = heroCfg.products.map((slug) => products.find((p) => p.slug === slug)).filter((p): p is (typeof products)[number] => !!p);
   const heroProducts = chosen.length ? chosen : [...products].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available'));
-  const slides: CarouselSlide[] = heroProducts.map((p) => {
-    const hero = p.status === 'available' ? productHero(p) : { images: [], label: p.name };
-    return { slug: p.slug, name: p.name, summary: p.summary, image: hero.images[0] ?? null, label: hero.label, available: p.status === 'available' && p.modules.length > 0 };
-  });
+  // Windows in the stack: only products with a screen, never more than STACK_MAX, however many products exist.
+  const stackOf = (list: typeof products): StackSlide[] =>
+    list
+      .filter((p) => p.status === 'available' && p.modules.length > 0)
+      .map((p) => {
+        const hero = productHero(p);
+        return { slug: p.slug, name: p.name, image: hero.images[0] ?? '', label: hero.label };
+      })
+      .filter((s) => s.image)
+      .slice(0, STACK_MAX);
+  // The chosen products may have no screens yet (e.g. all coming soon): then show whichever products do.
+  const chosenSlides = stackOf(heroProducts);
+  const slides = chosenSlides.length ? chosenSlides : stackOf(products);
   const staticProduct = heroProducts.find((p) => p.status === 'available' && productHero(p).images.length > 0);
 
   return (
@@ -72,7 +81,7 @@ export default function HomePage() {
                 <ProductCollage hero={productHero(staticProduct)} productName={staticProduct.name} chips={heroChips(staticProduct, productHero(staticProduct))} />
               ) : null
             ) : (
-              <ProductCarousel slides={slides} mode={heroCfg.animation} seconds={heroCfg.seconds} />
+              <HeroStack slides={slides} seconds={heroCfg.seconds} chips={slides.length ? genericChips(live[0]!, { images: [], label: live[0]!.name }).map((c, i) => (i === 0 ? { icon: 'search' as const, text: 'Find any task fast' } : c)) : []} />
             )}
           </div>
         </section>

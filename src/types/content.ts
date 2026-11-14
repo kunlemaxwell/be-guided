@@ -16,6 +16,10 @@ export const VIDEO_DISPLAYS = ['collapsed', 'expanded'] as const;
 export const HERO_ANIMATIONS = ['static', 'slideshow', '3d'] as const;
 export type HeroAnimation = (typeof HERO_ANIMATIONS)[number];
 
+/** Icons a product may use on its hero's floating labels (drawn in components/Icons.tsx). */
+export const HERO_ICON_NAMES = ['users', 'building', 'briefcase', 'chart', 'target', 'calendar', 'mail', 'box', 'receipt', 'wallet', 'truck', 'shield', 'file', 'check', 'play', 'list', 'layers', 'clock', 'settings', 'search'] as const;
+export type HeroIconName = (typeof HERO_ICON_NAMES)[number];
+
 export const heroSettingsSchema = z.object({
   animation: z.enum(HERO_ANIMATIONS).default('3d'),
   /** Which products appear, in this order (web address names). Empty = every product on the site. Static uses the first. */
@@ -135,6 +139,8 @@ export const productSchema = z.object({
     .object({
       images: z.array(z.string().regex(/^[a-z0-9-]+\/(images)\/[A-Za-z0-9._-]+$/)).max(4).default([]),
       label: z.string().max(60).optional(),
+      /** Up to three floating labels, each with an icon that fits the product. Left out: generic labels. */
+      chips: z.array(z.object({ icon: z.enum(HERO_ICON_NAMES), text: z.string().max(40) })).max(3).optional(),
       video: z
         .object({
           src: z.string().regex(/^[a-z0-9-]+\/media\/[A-Za-z0-9._-]+\.(?:mp4|webm)$/),
@@ -326,8 +332,8 @@ export const whatsNewEntrySchema = z.object({
   where: z.string().trim().min(1).max(40).optional(),
   /** Who it concerns, in the app's own user types. "Everyone" when it is for all. */
   audience: z.array(z.string().trim().min(1).max(60)).min(1).default(['Everyone']),
-  /** New feature or an improvement to something that existed. */
-  kind: z.enum(['new', 'improved']).default('new'),
+  /** A new feature, an improvement to something that existed, or a bug fix. */
+  kind: z.enum(['new', 'improved', 'fixed']).default('new'),
   /** The guide page that shows how to use it: "module/page" or "product/module/page". */
   guide: z.string().min(1).optional(),
 });

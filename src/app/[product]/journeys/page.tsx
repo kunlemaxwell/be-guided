@@ -43,6 +43,7 @@ export default async function JourneysPage({ params }: { params: Promise<Params>
         <JourneyPicker
           product={product.slug}
           productName={product.name}
+          startOpen
           journeys={journeys.map((j) => ({ slug: j.slug, title: j.title, summary: j.summary, group: j.group, inferred: j.inferred, steps: j.steps }))}
         />
         {[...groups.entries()].map(([group, items]) => (
