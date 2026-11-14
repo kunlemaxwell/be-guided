@@ -148,14 +148,14 @@ describe("What's new: grouping and filters", () => {
 
   it('filters by product: none ticked shows every product, ticked ones show only theirs', () => {
     const two = [
-      { ...entries[0]!, productSlug: 'crm', productName: 'CRM' },
-      { ...entries[1]!, productSlug: 'wbiz', productName: 'WbizManager' },
-      { ...entries[2]!, productSlug: 'crm', productName: 'CRM' },
+      { ...entries[0]!, productSlug: 'alpha', productName: 'Alpha' },
+      { ...entries[1]!, productSlug: 'beta', productName: 'Beta' },
+      { ...entries[2]!, productSlug: 'alpha', productName: 'Alpha' },
     ];
     expect(slugs(applyFilters(two, EMPTY_FILTERS))).toEqual(['a', 'b', 'c']);
-    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['crm'] }))).toEqual(['a', 'c']);
-    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['crm', 'wbiz'] }))).toEqual(['a', 'b', 'c']);
-    expect(countOption(two, { ...EMPTY_FILTERS, modules: ['Settings'] }, 'products', (e) => e.productSlug === 'crm')).toBe(0);
+    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['alpha'] }))).toEqual(['a', 'c']);
+    expect(slugs(applyFilters(two, { ...EMPTY_FILTERS, products: ['alpha', 'beta'] }))).toEqual(['a', 'b', 'c']);
+    expect(countOption(two, { ...EMPTY_FILTERS, modules: ['Settings'] }, 'products', (e) => e.productSlug === 'alpha')).toBe(0);
   });
 
   it('offers Product as a way to view only when the page covers every product', () => {
@@ -165,12 +165,12 @@ describe("What's new: grouping and filters", () => {
 
   it('groups by product, the product with the newest change first', () => {
     const two = [
-      { ...entries[2]!, productSlug: 'crm', productName: 'CRM' },
-      { ...entries[0]!, productSlug: 'wbiz', productName: 'WbizManager' },
-      { ...entries[1]!, productSlug: 'wbiz', productName: 'WbizManager' },
+      { ...entries[2]!, productSlug: 'alpha', productName: 'Alpha' },
+      { ...entries[0]!, productSlug: 'beta', productName: 'Beta' },
+      { ...entries[1]!, productSlug: 'beta', productName: 'Beta' },
     ];
     const g = groupEntries(two, 'product');
-    expect(g.map((x) => x.label)).toEqual(['WbizManager', 'CRM']);
+    expect(g.map((x) => x.label)).toEqual(['Beta', 'Alpha']);
     expect(slugs(g[0]!.entries)).toEqual(['a', 'b']);
   });
 
@@ -182,8 +182,8 @@ describe("What's new: grouping and filters", () => {
 
 describe("What's new: where the link goes", () => {
   it("opens the product's own page from inside a product, and the all-products page from the main page", () => {
-    expect(whatsNewHref('crm-business-development')).toBe('/crm-business-development/whats-new/');
-    expect(whatsNewHref('wbizmanager')).toBe('/wbizmanager/whats-new/');
+    expect(whatsNewHref('product-two')).toBe('/product-two/whats-new/');
+    expect(whatsNewHref('product-one')).toBe('/product-one/whats-new/');
     expect(whatsNewHref()).toBe('/changelog/');
     expect(whatsNewHref('')).toBe('/changelog/');
     expect(whatsNewAllHref).toBe('/changelog/all/');
