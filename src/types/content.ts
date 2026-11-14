@@ -267,3 +267,39 @@ export interface ResolvedLink {
   title: string;
   summary: string;
 }
+
+/**
+ * User journeys: the path one kind of user takes through a product's guide.
+ * Stored in content/products/<product>/journeys.json. A journey is data, not
+ * code: user types are not fixed in the apps, so journeys are written from the
+ * app's real user types or roles when it has them, and inferred from what the
+ * product does when it has none. "Everyone" (the whole guide) is always there
+ * and is not stored.
+ */
+export const journeyStepSchema = z.object({
+  /** Guide reference: "module/page" (same product) or "product/module/page". */
+  page: z.string().min(1),
+  /** One short line on why this user needs the page (optional). */
+  why: z.string().max(240).optional(),
+});
+
+export const journeySchema = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'use lower-case words joined by dashes'),
+  title: z.string().trim().min(1).max(60),
+  summary: z.string().trim().min(1).max(240),
+  /** Heading it is listed under in the picker, e.g. "Finance", "HR". */
+  group: z.string().trim().min(1).max(40).optional(),
+  /** True when the user type was inferred from the product rather than read from the app's own roles. */
+  inferred: z.boolean().default(false),
+  order: z.number().int().default(100),
+  steps: z.array(journeyStepSchema).min(1),
+});
+export const journeysFileSchema = z.object({ journeys: z.array(journeySchema).default([]) });
+export type JourneyStep = z.infer<typeof journeyStepSchema>;
+export type JourneyMeta = z.infer<typeof journeySchema>;
+
+/** A journey as readers see it: steps resolved to pages that exist in this build. */
+export interface Journey extends Omit<JourneyMeta, 'steps'> {
+  productSlug: string;
+  steps: { id: string; title: string; summary: string; href: string; moduleTitle: string; why?: string }[];
+}

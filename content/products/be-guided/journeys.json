@@ -1,0 +1,51 @@
+{
+  "journeys": [
+    {
+      "slug": "reader",
+      "title": "Reader",
+      "group": "Using the guide",
+      "summary": "Find the answer you need and take the guide into your own AI.",
+      "inferred": true,
+      "order": 10,
+      "steps": [
+        { "page": "reading-the-guide/find-a-guide", "why": "Search and browse to the page you need." },
+        { "page": "reading-the-guide/share-a-product-link" },
+        { "page": "reading-the-guide/connect-your-ai", "why": "Ask your own Claude or ChatGPT about the guide." }
+      ]
+    },
+    {
+      "slug": "guide-writer",
+      "title": "Guide writer",
+      "group": "Writing",
+      "summary": "Write and update guide pages by hand or with your AI, and send them for approval.",
+      "inferred": true,
+      "order": 20,
+      "steps": [
+        { "page": "getting-started/sign-in-to-the-admin" },
+        { "page": "writing-guides/edit-a-page" },
+        { "page": "writing-guides/add-a-product" },
+        { "page": "writing-with-ai/write-guides-with-your-ai", "why": "Let your AI draft pages from your real product." },
+        { "page": "writing-guides/approve-changes" }
+      ]
+    },
+    {
+      "slug": "site-owner",
+      "title": "Site owner",
+      "group": "Running the site",
+      "summary": "Install Be Guided, put it online, and decide who can change what.",
+      "inferred": true,
+      "order": 30,
+      "steps": [
+        { "page": "getting-started/install-be-guided" },
+        { "page": "getting-started/set-up-with-your-ai" },
+        { "page": "getting-started/sign-in-to-the-admin" },
+        { "page": "settings-and-people/add-people", "why": "Choose who can sign in and what each person may do." },
+        { "page": "settings-and-people/change-the-look" },
+        { "page": "writing-guides/publish-the-site" },
+        { "page": "settings-and-people/see-every-change" },
+        { "page": "writing-with-ai/schedule-update-checks" },
+        { "page": "writing-with-ai/switch-on-ask-ai" }
+      ]
+    }
+  ]
+}

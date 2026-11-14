@@ -1,0 +1,22 @@
+{
+  "journeys": [
+    {
+      "slug": "seller",
+      "title": "Seller",
+      "group": "Sales",
+      "summary": "Open pages and a hidden one.",
+      "steps": [
+        { "page": "sales/open-page", "why": "Start here." },
+        { "page": "sales/draft-page" },
+        { "page": "sales/public-setup" },
+        { "page": "sales/open-page" }
+      ]
+    },
+    {
+      "slug": "ghost",
+      "title": "Ghost",
+      "summary": "Only points at pages that are not in the build.",
+      "steps": [{ "page": "sales/draft-page" }, { "page": "sales/missing-page" }]
+    }
+  ]
+}

@@ -15,6 +15,8 @@ import { VideoBlock } from '@/components/guide/VideoBlock';
 import { PageFeedback } from '@/components/guide/PageFeedback';
 import { CheckCircleIcon } from '@/components/Icons';
 import { isSearchable } from '@/lib/search/documents';
+import { getJourneys } from '@/lib/content/journeys';
+import { ArticleJourneyBar } from '@/components/journeys/ArticleJourneyBar';
 
 type Params = { product: string; module: string; page: string };
 
@@ -53,6 +55,9 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
   const prereqs = page.prerequisites
     .map((p) => ({ ...p, target: resolveGuideRef(page.productSlug, p.page) }))
     .filter((p) => p.target !== null);
+  const pageJourneys = getJourneys(pSlug)
+    .filter((j) => j.steps.some((s) => s.id === page.id))
+    .map((j) => ({ slug: j.slug, title: j.title, steps: j.steps.map((s) => ({ id: s.id, title: s.title, href: s.href })) }));
   const videoSrc = page.video ? assetUrl(page, page.video.src) : null;
   const videoPoster = page.video?.poster ? assetUrl(page, page.video.poster) ?? undefined : undefined;
   const toc = page.headings;
@@ -119,6 +124,7 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
                   ))}
                 </ol>
               </details>
+              {pageJourneys.length ? <ArticleJourneyBar product={product.slug} pageId={page.id} journeys={pageJourneys} /> : null}
               <h1 className="doc-title" data-pagefind-meta="title">{page.title}</h1>
               <p className="doc-lead">{page.summary}</p>
               <p className="doc-meta" data-pagefind-ignore="all">

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSite } from '@/lib/content/load';
+import { getJourneys } from '@/lib/content/journeys';
 import { ModeToggle } from './ModeToggle';
 import { ProductsMenu } from './ProductsMenu';
 import { SiteSearch } from './search/SiteSearch';
@@ -11,6 +12,7 @@ interface Props {
 /** Site header shared by every page. Theme CSS decides how it looks. */
 export function SiteHeader({ product }: Props) {
   const site = getSite();
+  const hasJourneys = product ? getJourneys(product.slug).length > 0 : false;
   return (
     <header className="site-header">
       <div className="container container--wide site-header__inner">
@@ -29,6 +31,7 @@ export function SiteHeader({ product }: Props) {
         <SiteSearch />
         <nav className="header-nav" aria-label="Main">
           <ProductsMenu current={product?.slug} />
+          {product && hasJourneys ? <Link href={`/${product.slug}/journeys/`}>User journeys</Link> : null}
           <Link href="/changelog/">What&apos;s new</Link>
           <ModeToggle />
         </nav>

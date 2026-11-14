@@ -44,6 +44,23 @@ export interface CheckJob {
   plan: { name: string; contentMode: ContentMode; contentModeLabel: string; autoUpdate: boolean; requireApproval: boolean } | null;
   skills: { kind: 'writing' | 'qa'; name: string; content: string }[];
   steps: string[];
+  /**
+   * What the guide was last verified against. A check must cover everything in the
+   * code that is newer than the pages it affects, not just the latest commits.
+   */
+  baseline: CheckBaseline;
+}
+
+export interface CheckBaseline {
+  rule: string;
+  /** Every published page and the date it was last updated (YYYY-MM-DD). Oldest first. */
+  pageUpdated: { id: string; updated: string }[];
+  oldestPageUpdated: string | null;
+  newestPageUpdated: string | null;
+  /** The previous finished or waiting check of this product, for its date. */
+  previousCheck: { id: string; startedAt: string | null; summary: string | null } | null;
+  /** Changes found by earlier checks of this product that nobody has applied yet. Check each again and keep reporting the ones still true. */
+  openChanges: { checkId: string; id: string; pageId: string | null; kind: string; title: string; detail: string; evidence: string | null; decision: string }[];
 }
 
 export class AutomationService {
@@ -222,6 +239,34 @@ export class AutomationService {
     return { ...check, changes: await this.checks.changes(id) };
   }
 
+  /** The dates and open findings a check must start from, so nothing between two checks is missed. */
+  private async baselineFor(product: string, thisCheckId: string): Promise<CheckBaseline> {
+    const library = await this.content.getLibrary();
+    const pages = (library.products.find((p) => p.slug === product)?.modules ?? [])
+      .flatMap((m) => m.pages)
+      .filter((p) => p.status === 'published' && p.updated)
+      .map((p) => ({ id: p.id, updated: p.updated }))
+      .sort((a, b) => a.updated.localeCompare(b.updated) || a.id.localeCompare(b.id));
+    const earlier = (await this.checks.list({ product, limit: 20 })).filter((c) => c.id !== thisCheckId && c.status !== 'queued' && c.status !== 'failed' && c.status !== 'cancelled');
+    const open: CheckBaseline['openChanges'] = [];
+    for (const c of earlier) {
+      for (const ch of await this.checks.changes(c.id)) {
+        if (ch.decision === 'pending' || ch.decision === 'selected') {
+          open.push({ checkId: c.id, id: ch.id, pageId: ch.pageId, kind: ch.kind, title: ch.title, detail: ch.detail, evidence: ch.evidence, decision: ch.decision });
+        }
+      }
+    }
+    const previous = earlier[0];
+    return {
+      rule: 'A change in the code is a gap when it is newer than the guide page it affects. Compare each page with everything that changed after that page\'s own updated date, not only with the latest commits. Earlier findings that nobody applied are still gaps.',
+      pageUpdated: pages,
+      oldestPageUpdated: pages[0]?.updated ?? null,
+      newestPageUpdated: pages.at(-1)?.updated ?? null,
+      previousCheck: previous ? { id: previous.id, startedAt: previous.startedAt, summary: previous.summary } : null,
+      openChanges: open.slice(0, 100),
+    };
+  }
+
   /** An AI takes the next queued check (or a given one) and gets the whole job description. */
   async claimCheck(ctx: RequestContext, scope: ProductScope, id?: string): Promise<CheckJob | null> {
     this.require(ctx, 'write');
@@ -241,16 +286,21 @@ export class AutomationService {
     const skills = await this.skillsFor(check.product);
     await this.activity.record(ctx, { area: 'automation', action: 'check.start', target: check.id, summary: `Started the update check of ${check.product}` });
     const started = (await this.checks.get(check.id))!;
+    const baseline = await this.baselineFor(check.product, check.id);
     return {
       check: started,
+      baseline,
       product: { slug: check.product, name: product?.name ?? check.product, repos: product?.repos ?? [] },
       plan: { name: check.planName ?? 'Check now', contentMode: check.contentMode, contentModeLabel: MODE_LABEL[check.contentMode], autoUpdate: check.autoUpdate, requireApproval: check.requireApproval },
       skills: skills.map((s) => ({ kind: s.kind, name: s.name, content: s.content })),
       steps: [
-        'Read the product\'s code (the repos above; on the person\'s computer, use the local folder when given) and compare it with every guide page of this product (list_products, read_page).',
+        'Pull the code first (git remote prune origin, then git pull --ff-only) so you compare against the latest. Then read the product\'s code (the repos above; on the person\'s computer, use the local folder when given) and compare it with every guide page of this product (list_products, read_page).',
+        'Do NOT look only at the latest commits. Use the baseline in this job: it lists every page and the date it was last updated. For each page, find what changed in the code AFTER that page\'s own updated date (git log --since=<that date> --no-merges on the repo paths, matched by the page\'s appRoutes and topic). Start from baseline.oldestPageUpdated so the oldest pages get the longest look. A page updated on 4 Nov is compared with everything from 4 Nov onwards, even if the guide was edited again on 12 Nov.',
+        'baseline.openChanges lists findings from earlier checks that nobody applied yet. Check each against the current code: if it is still true, include it again in your report (do not drop it because it is not in the latest commits); if it is no longer true, say so in the summary.',
+        'Look at the user types too. Read the roles or user types in the product\'s code and settings (role constants, permission groups, user-type screens, menu visibility per role). They are not fixed, so read what is there now. If the product has none, infer who uses it from what it does (for example head of finance, finance executive, inventory manager, hiring manager, head of HR, HR administrator, supervisor, employee). Compare them with the journeys in content/products/<product>/journeys.json and report any user type without a journey, any new or removed page a journey needs, and any page no journey uses.',
         'If a QA skill is listed, follow it while you look: record real bugs you see as changes of kind "bug".',
         'List every difference that matters to a reader: changed screens or labels, new features without a guide, removed features, pages to add. Give each the page id it affects and where in the code you saw it (evidence).',
-        'Call report_update_check once with a short summary and the list. Report an empty list if nothing changed.',
+        'Call report_update_check once with a short summary and the list. In the summary state the baseline you used (oldest page date, the commit you pulled to) and how many earlier findings are still open. Report an empty list only if nothing changed since any page was updated and no earlier finding is open.',
         'If the answer says to apply changes now, update those pages in the content mode it gives (follow the writing skill and get_writing_standard), then call mark_changes_applied. Otherwise stop: a person will choose what to apply.',
         'If you cannot finish, call fail_update_check with the reason.',
       ],

@@ -98,6 +98,16 @@ Every product page groups its modules by business area (the module's "area"), ne
 - The product's core area comes first (for Acme Books, Accounting). The order of areas follows the order of their first module.
 - An area with two or more modules gets its own "everything in one view" page automatically.
 
+## User journeys (who is the guide for?)
+A guide is read by different kinds of user, and not everyone needs the whole product. Every product can have user journeys: the short, ordered list of guides one kind of user needs. They are stored in the product's journeys.json (content/products/<product>/journeys.json) and shown on the site as "Which user are you?", on a user journeys page with a path for each, and as "step 2 of 8" on guide pages.
+- User types are NOT fixed. Before you write or update anything, look at who uses the feature: read the roles or user types in the app's code and settings (role names, permission groups, user-type screens, menus that show per role). Use the real ones. If the app has none, infer them from what the product does, and set "inferred": true on the journey.
+- Think in jobs, not titles: e.g. employee, supervisor or head of department, HR administrator, head of HR, head of finance or chief accountant, finance executive, procurement officer, inventory manager, hiring manager, system administrator. A person can fit several, and readers can pick several.
+- Each journey: slug (lower-case words with dashes), title (short job name), summary (one sentence), group (the heading it sits under, e.g. Finance, People and teams), steps (ordered: first the page that orients them, then setup they own, then daily tasks, then reports), each step { page: "module/page", why: "one short line, optional" }.
+- Whenever you add, rename or remove a page, check which journeys it belongs to and update them. A new page that no journey uses is a gap: say so. When you add a feature that a new kind of user needs, add that journey.
+- "Everyone" (the whole guide) always exists and is not stored. Never hide pages from the site because of a journey: journeys focus the guide, they do not restrict it.
+- Pages can name their reader in frontmatter audience (e.g. "Every employee", "HR administrators"). Keep it consistent with the journeys.
+- When you report an update check, include journey changes next to the page changes.
+
 ## Saving
 - save_page validates the page. Fix every problem it reports and try again.
 - Write the whole page first, then save. Approval only decides whether the finished page goes public; nobody has to approve before you start.

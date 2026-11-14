@@ -236,6 +236,31 @@ describe.skipIf(!IN_PROCESS)('Automatic checks (owner, local)', () => {
     expect(r.check.changes.find((c) => c.kind === 'bug')!.decision).toBe('pending');
   });
 
+  it('TC-AUTO-BASE baseline: the job lists every page with its own updated date and carries earlier unapplied findings forward', async () => {
+    const product = 'acme-crm';
+    data(await tool(h.api, 'assign_update_plan', { planId: null, products: [product] }));
+    const first = data<CheckDto>(await tool(h.api, 'run_update_check', { product }));
+    type Job = { baseline: { rule: string; pageUpdated: { id: string; updated: string }[]; oldestPageUpdated: string | null; openChanges: { title: string; checkId: string }[]; previousCheck: unknown }; steps: string[] };
+    const job1 = data<{ job: Job }>(await tool(h.api, 'claim_update_check', { checkId: first.id })).job;
+    expect(job1.baseline.rule).toMatch(/newer than the guide page/);
+    expect(job1.baseline.pageUpdated.length).toBeGreaterThan(0);
+    expect(job1.baseline.pageUpdated.every((p) => p.id.startsWith(`${product}/`) && /^\d{4}-\d{2}-\d{2}$/.test(p.updated))).toBe(true);
+    const dates = job1.baseline.pageUpdated.map((p) => p.updated);
+    expect([...dates].sort()).toEqual(dates); // oldest first
+    expect(job1.baseline.oldestPageUpdated).toBe(dates[0]);
+    const alreadyOpen = job1.baseline.openChanges.length; // earlier tests leave findings on this product
+    expect(job1.steps.join(' ')).toMatch(/Do NOT look only at the latest commits/);
+    expect(job1.steps.join(' ')).toMatch(/baseline\.openChanges/);
+    data(await tool(h.api, 'report_update_check', { checkId: first.id, summary: 'One gap.', changes: [{ pageId: null, kind: 'new-feature', title: 'Audit log has no guide', detail: 'Found early, never applied.' }] }));
+
+    // A later check starts from the same baseline and still sees the unapplied finding.
+    const second = data<CheckDto>(await tool(h.api, 'run_update_check', { product }));
+    const job2 = data<{ job: Job }>(await tool(h.api, 'claim_update_check', { checkId: second.id })).job;
+    expect(job2.baseline.openChanges).toHaveLength(alreadyOpen + 1);
+    expect(job2.baseline.openChanges.map((c) => c.title)).toContain('Audit log has no guide');
+    expect(job2.baseline.previousCheck).toMatchObject({ id: first.id });
+  });
+
   it('TC-AUTO-010 Check now with a chosen mode; nothing changed → done; cancel and fail rules', async () => {
     data(await tool(h.api, 'assign_update_plan', { planId: null, products: ['acme-books'] }));
     // The scheduled check from TC-AUTO-008 is still queued: cancel it first.

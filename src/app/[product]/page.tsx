@@ -9,6 +9,8 @@ import { moduleGroups } from '@/lib/content/areas';
 import { heroChips, productHero } from '@/lib/content/hero';
 import { ProductCollage } from '@/components/hero/ProductCollage';
 import { ProductLinkButton } from '@/components/ProductLinkButton';
+import { getJourneys } from '@/lib/content/journeys';
+import { JourneyPicker } from '@/components/journeys/JourneyPicker';
 
 type Params = { product: string };
 
@@ -34,6 +36,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (!product) notFound();
   const hero = productHero(product);
   const chips = heroChips(product, hero);
+  const journeys = getJourneys(product.slug);
 
   return (
     <>
@@ -58,6 +61,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </div>
         </section>
         <div className="container">
+          <JourneyPicker
+            product={product.slug}
+            productName={product.name}
+            journeys={journeys.map((j) => ({ slug: j.slug, title: j.title, summary: j.summary, group: j.group, inferred: j.inferred, steps: j.steps }))}
+          />
           {moduleGroups(product).map((g) => (
             <section key={g.slug} className="section section--tight" aria-labelledby={`group-${g.slug}`}>
               <div className="group-head">
