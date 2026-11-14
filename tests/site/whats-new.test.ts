@@ -20,6 +20,12 @@ afterEach(() => {
 });
 
 describe("What's new: loading", () => {
+  it('leaves out an entry that was switched off (hidden)', async () => {
+    const { getWhatsNew, getAllWhatsNew } = await load('production');
+    expect(getWhatsNew('alpha').map((e) => e.slug)).not.toContain('switched-off');
+    expect(getAllWhatsNew().map((e) => e.slug)).not.toContain('switched-off');
+  });
+
   it('lists the newest day first, and within a day by title', async () => {
     const { getWhatsNew } = await load('production');
     expect(getWhatsNew('alpha').map((e) => e.slug)).toEqual(['no-guide', 'same-day-b', 'newer-feature', 'older-feature']);

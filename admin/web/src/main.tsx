@@ -14,6 +14,7 @@ import './styles.css';
 const PagesScreen = lazy(() => import('./features/pages/PagesScreen'));
 const PageEditorScreen = lazy(() => import('./features/editor/PageEditorScreen'));
 const ProductsScreen = lazy(() => import('./features/products/ProductsScreen'));
+const WhatsNewScreen = lazy(() => import('./features/whatsnew/WhatsNewScreen'));
 const RequestsScreen = lazy(() => import('./features/requests/RequestsScreen'));
 const SettingsScreen = lazy(() => import('./features/settings/SettingsScreen'));
 const AuditScreen = lazy(() => import('./features/audit/AuditScreen'));
@@ -44,6 +45,7 @@ const routes: RouteObject[] = [
       { path: 'pages', element: <PagesScreen />, errorElement: <ErrorFallback /> },
       { path: 'pages/:product/:module/:page', element: <PageEditorScreen />, errorElement: <ErrorFallback /> },
       { path: 'products', element: <ProductsScreen />, errorElement: <ErrorFallback /> },
+      { path: 'whats-new', element: <WhatsNewScreen />, errorElement: <ErrorFallback /> },
       { path: 'requests', element: <RequestsScreen />, errorElement: <ErrorFallback /> },
       { path: 'automation', element: <StudioScreen kind="automation" />, errorElement: <ErrorFallback /> },
       { path: 'feedback', element: <StudioScreen kind="feedback" />, errorElement: <ErrorFallback /> },

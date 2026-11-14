@@ -203,7 +203,12 @@ export class EditorService {
       .map((p) => ({
         product: p.slug,
         name: p.meta.name,
-        needsApproval: session.ctx.actor.role !== 'owner' && p.meta.editorApproval !== false,
+        // "Publish automatically" per product: page updates, and What's new entries (both on unless switched off).
+        autoPublish: {
+          pages: (p.meta as { autoPublish?: { pages?: boolean } }).autoPublish?.pages !== false,
+          whatsNew: (p.meta as { autoPublish?: { whatsNew?: boolean } }).autoPublish?.whatsNew !== false,
+        },
+        needsApproval: (p.meta as { autoPublish?: { pages?: boolean } }).autoPublish?.pages === false || (session.ctx.actor.role !== 'owner' && p.meta.editorApproval !== false),
         // Where this product's code lives, so the editor's AI reads the right repo/folders on their own computer.
         sources: ((p.meta.source as { repos?: { url: string; branch?: string; paths?: string[] }[] } | undefined)?.repos ?? []).map((r) => ({
           url: r.url,
@@ -255,6 +260,12 @@ export class EditorService {
    * the body the house rules. For products that need approval the change is
    * queued for an owner; otherwise it is saved (and goes live) at once.
    */
+  /** Add or update What's new entries. They are shown at once, or kept off until an owner switches them on (product setting). */
+  async saveWhatsNew(session: EditorSession, input: { product: string; entries: Record<string, unknown>[] }) {
+    this.requireProduct(session, input.product);
+    return this.content.saveWhatsNewEntries(session.ctx, input.product, input.entries);
+  }
+
   async savePage(
     session: EditorSession,
     input: { product: string; module: string; slug: string; frontmatter: Record<string, unknown>; body: string; note?: string },
@@ -275,7 +286,8 @@ export class EditorService {
     const exists = await this.content.pageExists(product, module, slug);
     const pageId = `${product}/${module}/${slug}`;
     // Owners approve changes, so their own changes publish straight away.
-    const needsApproval = session.ctx.actor.role !== 'owner' && (await this.content.editorApprovalRequired(product));
+    // Waits for approval when the product's "publish automatically" is off (even for owners), or when an editor's changes need approval.
+    const needsApproval = !(await this.content.autoPublish(product)).pages || (session.ctx.actor.role !== 'owner' && (await this.content.editorApprovalRequired(product)));
 
     if (needsApproval) {
       const change: PendingChangeRecord = {

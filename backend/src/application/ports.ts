@@ -28,6 +28,9 @@ export interface ContentRepository {
   listProducts(): Promise<string[]>;
   readProduct(product: string): Promise<unknown | null>;
   writeProduct(product: string, value: Record<string, unknown>, message: string): Promise<void>;
+  /** whats-new.json of a product ({ entries: [...] }), or null when it has none yet. */
+  readWhatsNew(product: string): Promise<unknown | null>;
+  writeWhatsNew(product: string, value: Record<string, unknown>, message: string): Promise<void>;
   listModules(product: string): Promise<string[]>;
   readModule(product: string, module: string): Promise<unknown | null>;
   writeModule(product: string, module: string, value: Record<string, unknown>, message: string): Promise<void>;

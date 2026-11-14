@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { describeError } from '../../api/client';
+import { useNotice } from '../../hooks/useNotice';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { ModuleSummary, PageSummary, ProductSummary } from '../../../../shared/api-types';
 import { api, queryKeys } from '../../api/endpoints';
@@ -53,6 +55,27 @@ function PageBadges({ page }: { page: PageSummary }) {
   );
 }
 
+/** "Show on the site" tick: off keeps the page out of the public site (it becomes a draft); never deletes. */
+function ShownToggle({ page, canWrite }: { page: PageSummary; canWrite: boolean }) {
+  const qc = useQueryClient();
+  const { notify } = useNotice();
+  const shown = page.status !== 'draft';
+  const change = useMutation({
+    mutationFn: (next: boolean) => api.setPageShown(page.product, page.module, page.slug, next),
+    onSuccess: (_r, next) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.library });
+      notify('success', next ? `“${page.title}” is shown on the site.` : `“${page.title}” is hidden from the site.`);
+    },
+    onError: (e) => notify('error', describeError(e)),
+  });
+  return (
+    <label className="shown-toggle" title={shown ? 'Shown on the public site. Untick to hide it.' : 'Hidden from the public site. Tick to show it.'}>
+      <input type="checkbox" checked={shown} disabled={!canWrite || change.isPending} onChange={(e) => change.mutate(e.target.checked)} />
+      <span>Show on site</span>
+    </label>
+  );
+}
+
 function PageRow({
   page,
   onMakeVideo,
@@ -91,6 +114,7 @@ function PageRow({
       </div>
       <PageBadges page={page} />
       <div className="page-row__actions">
+        <ShownToggle page={page} canWrite={canWrite} />
         <ActionsMenu
           label={`Actions for ${page.title}`}
           items={[

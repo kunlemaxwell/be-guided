@@ -126,6 +126,11 @@ export const productSchema = z.object({
    * an owner's approval in the admin when true; when false they go live at once.
    */
   editorApproval: z.boolean().default(true),
+  /**
+   * Publish automatically (default on). Pages: changes made by checks or the connector go live at once. What's new: new
+   * entries are shown at once. Off: they wait for an owner (pages in Updates & requests, entries as "Waiting" in What's new).
+   */
+  autoPublish: z.object({ pages: z.boolean().default(true), whatsNew: z.boolean().default(true) }).optional(),
   /** Optional per-product theme; falls back to the site theme. */
   theme: z.enum(THEME_IDS).optional(),
   /**
@@ -336,12 +341,14 @@ export const whatsNewEntrySchema = z.object({
   kind: z.enum(['new', 'improved', 'fixed']).default('new'),
   /** The guide page that shows how to use it: "module/page" or "product/module/page". */
   guide: z.string().min(1).optional(),
+  /** true = kept out of the public What's new (switched off in the admin, or waiting for approval). Absent = shown. */
+  hidden: z.boolean().optional(),
 });
 export const whatsNewFileSchema = z.object({ entries: z.array(whatsNewEntrySchema).default([]) });
 export type WhatsNewEntryMeta = z.infer<typeof whatsNewEntrySchema>;
 
 /** An entry as readers see it: module named, guide link resolved to a page that exists in this build. */
-export interface WhatsNewEntry extends Omit<WhatsNewEntryMeta, 'module' | 'guide' | 'where'> {
+export interface WhatsNewEntry extends Omit<WhatsNewEntryMeta, 'module' | 'guide' | 'where' | 'hidden'> {
   productSlug: string;
   productName: string;
   moduleSlug: string;

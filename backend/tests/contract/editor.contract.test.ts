@@ -90,7 +90,7 @@ describe.skipIf(!IN_PROCESS)('Editor connector', () => {
   it('lists only content tools', async () => {
     const r = await rpc(h.api, allKey, 'tools/list');
     const names = ((r.body.result as { tools: { name: string }[] }).tools ?? []).map((t) => t.name).sort();
-    const content = ['get_upload_link', 'get_writing_standard', 'list_products', 'my_changes', 'read_page', 'request_new_module', 'request_new_product', 'request_video', 'save_page', 'upload_screenshot'];
+    const content = ['get_upload_link', 'get_writing_standard', 'list_products', 'my_changes', 'read_page', 'request_new_module', 'request_new_product', 'request_video', 'save_page', 'save_whats_new', 'upload_screenshot'];
     const automation = ['assign_update_plan', 'automation_overview', 'cancel_update_check', 'claim_update_check', 'decide_update_check', 'delete_skill', 'delete_update_plan', 'fail_update_check', 'feedback_summary', 'get_skill', 'get_skills', 'get_update_check', 'list_skills', 'list_update_checks', 'mark_changes_applied', 'open_be_guided_studio', 'report_update_check', 'run_update_check', 'save_skill', 'save_update_plan'];
     const inChatAdmin = ['admin_api', 'open_be_guided_admin'];
     expect(names).toEqual([...content, ...automation, ...inChatAdmin].sort());

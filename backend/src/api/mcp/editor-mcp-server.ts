@@ -108,6 +108,11 @@ A guide is read by different kinds of user, and not everyone needs the whole pro
 - Pages can name their reader in frontmatter audience (e.g. "Every employee", "HR administrators"). Keep it consistent with the journeys.
 - When you report an update check, include journey changes next to the page changes.
 
+## What's new
+Every product has a What's new page: one entry per feature, dated the day it reached production (not the day it was built), with a one-line summary, the module, who it is for (the app's own user types), whether it is new, improved or a bug fix, and the guide page that shows how to use it. After you add or change a guide for a feature that readers did not have before, add its entry with save_whats_new. Plain words, no em dashes.
+- Each product has two "publish automatically" settings, shown by list_products: for pages and for What's new. If page publishing is off, every save_page waits for an owner. If What's new publishing is off, save_whats_new saves new entries switched off and an owner switches them on in the admin. Say so in your report when something is waiting.
+- Owners can also switch any single page or What's new entry off the public site in the admin. Never switch things off yourself.
+
 ## Saving
 - save_page validates the page. Fix every problem it reports and try again.
 - Write the whole page first, then save. Approval only decides whether the finished page goes public; nobody has to approve before you start.
@@ -221,6 +226,34 @@ export function createEditorMcpServer(deps: EditorMcpDeps): McpServer {
       guarded(deps, 'read_page', async () => {
         const [p, m, s] = page_id.split('/') as [string, string, string];
         return json(await editor.readPage(session, p, m, s));
+      }),
+  );
+
+  server.registerTool(
+    'save_whats_new',
+    {
+      title: "Add or update What's new entries",
+      description:
+        "Add or update entries on a product's What's new page, one per feature, dated the day it reached production (see the writing standard). " +
+        'Entries are checked against the rules (title, one-line summary, module, audience, kind new/improved/fixed, guide page). ' +
+        "If the product has publish automatically off for What's new, new entries are saved switched off and wait for an owner to switch them on in the admin; otherwise they are live in about 2 minutes.",
+      inputSchema: {
+        product: slug.describe('Product slug from list_products'),
+        entries: z
+          .array(z.record(z.unknown()))
+          .min(1)
+          .max(40)
+          .describe('Entries: slug, date (YYYY-MM-DD), title, summary, detail?, module, where?, audience[], kind, guide?'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ product, entries }) =>
+      guarded(deps, 'save_whats_new', async () => {
+        const r = await editor.saveWhatsNew(session, { product, entries });
+        const text =
+          `Saved What's new for ${product}: ${r.added.length} added, ${r.updated.length} updated.` +
+          (r.waiting ? ' The new entries are switched off until an owner switches them on in the admin (What\'s new).' : ' They go live in about 2 minutes.');
+        return { content: [{ type: 'text' as const, text }] };
       }),
   );
 

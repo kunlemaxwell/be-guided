@@ -53,6 +53,14 @@ export class FsContentRepository implements ContentRepository {
     writeJsonAtomic(within(this.products(), product, 'product.json'), value);
   }
 
+  async readWhatsNew(product: string): Promise<unknown | null> {
+    return this.readJson(within(this.products(), product, 'whats-new.json'));
+  }
+
+  async writeWhatsNew(product: string, value: Record<string, unknown>): Promise<void> {
+    writeJsonAtomic(within(this.products(), product, 'whats-new.json'), value);
+  }
+
   async listModules(product: string): Promise<string[]> {
     return this.dirs(within(this.products(), product), 'module.json');
   }

@@ -8,6 +8,7 @@ import { getOpenProducts, getProduct, resolveGuideRef } from './load';
  * What's new for a product (content/products/<product>/whats-new.json), newest
  * first. A guide link that points at a page that is private, a draft or missing
  * is left off, so readers never meet a broken link; the entry itself stays.
+ * An entry marked `hidden` is switched off (or waiting for approval) and is not shown.
  * A module that does not exist is an error: it would show under a blank heading.
  */
 export function getWhatsNew(productSlug: string): WhatsNewEntry[] {
@@ -30,7 +31,8 @@ export function getWhatsNew(productSlug: string): WhatsNewEntry[] {
     seen.add(e.slug);
     const title = moduleTitle.get(e.module);
     if (!title) throw new Error(`Invalid content in ${rel}: entry "${e.slug}" names the module "${e.module}", which "${productSlug}" does not have`);
-    const { module, guide, where, ...rest } = e;
+    if (e.hidden) continue;
+    const { module, guide, where, hidden: _hidden, ...rest } = e;
     const link = guide ? resolveGuideRef(productSlug, guide) : null;
     out.push({ ...rest, productSlug, productName: product.name, moduleSlug: module, moduleTitle: where ?? title, ...(link ? { guideHref: link.href } : {}) });
   }

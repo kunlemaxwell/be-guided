@@ -38,6 +38,9 @@ interface FormState {
   visibility: 'public' | 'private';
   /** Connector changes wait for an owner's approval (default on). */
   editorApproval: boolean;
+  /** Publish automatically (default on): pages, and What's new entries. */
+  autoPages: boolean;
+  autoWhatsNew: boolean;
   status: 'available' | 'coming-soon';
   order: string;
   repos: RepoRow[];
@@ -56,6 +59,8 @@ function toForm(meta: ProductJson): FormState {
     summary: meta.summary,
     visibility: meta.visibility === 'private' ? 'private' : 'public',
     editorApproval: meta.editorApproval !== false,
+    autoPages: (meta.autoPublish as { pages?: boolean } | undefined)?.pages !== false,
+    autoWhatsNew: (meta.autoPublish as { whatsNew?: boolean } | undefined)?.whatsNew !== false,
     status: meta.status === 'coming-soon' ? 'coming-soon' : 'available',
     order: String(typeof meta.order === 'number' ? meta.order : 100),
     repos: (source?.repos ?? []).map((r) => ({ key: rowKey++, url: r.url ?? '', branch: r.branch ?? 'main', paths: (r.paths ?? []).join(', '), localPath: r.localPath ?? '' })),
@@ -79,6 +84,8 @@ function fromForm(meta: ProductJson, f: FormState): Record<string, unknown> {
     status: f.status,
     order: Number.parseInt(f.order, 10),
   };
+  if (f.autoPages && f.autoWhatsNew) delete next.autoPublish;
+  else next.autoPublish = { pages: f.autoPages, whatsNew: f.autoWhatsNew };
   const repos = f.repos
     .filter((r) => r.url.trim())
     .map((r) => ({
@@ -232,6 +239,26 @@ function ProductEditor({ product }: { product: ProductSummary }) {
           if (on && form.status === 'coming-soon') set('status', 'available');
         }}
         hint={form.visibility === 'public' ? 'Public: on the website for everyone.' : 'Private: kept off the public site, Ask AI and search. Still editable here.'}
+      />
+      <Switch
+        label="Publish page updates automatically"
+        checked={form.autoPages}
+        onChange={(on) => set('autoPages', on)}
+        hint={
+          form.autoPages
+            ? 'On: when a check or Claude Code updates a page, it goes live at once.'
+            : 'Off: every page change waits in Updates & requests until an owner approves it, even a change an owner makes through the connector.'
+        }
+      />
+      <Switch
+        label="Publish What's new automatically"
+        checked={form.autoWhatsNew}
+        onChange={(on) => set('autoWhatsNew', on)}
+        hint={
+          form.autoWhatsNew
+            ? 'On: new What\'s new entries appear on the site at once. You can still switch any entry off under What\'s new.'
+            : 'Off: new entries stay switched off until an owner switches them on under What\'s new.'
+        }
       />
       <Switch
         label="Approve connector changes before they go live"

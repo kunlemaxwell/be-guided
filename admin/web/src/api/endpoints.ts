@@ -32,6 +32,7 @@ import type {
   UpdatePersonInput,
   UploadKind,
   UploadResultDto,
+  WhatsNewAdminDto,
 } from '../../../shared/api-types';
 import { apiRequest, apiRequestWithMessage } from './client';
 
@@ -63,6 +64,7 @@ export const queryKeys = {
   auditEntry: (id: string) => ['audit-entry', id] as const,
   requests: ['requests'] as const,
   publish: ['publish'] as const,
+  whatsNew: (product: string) => ['whats-new', product] as const,
 };
 
 export const api = {
@@ -90,6 +92,11 @@ export const api = {
   getPage: (product: string, module: string, page: string, signal?: AbortSignal) => apiRequest<PageDetailDto>(pagePath(product, module, page), { signal }),
   savePage: (product: string, module: string, page: string, input: SavePageInput) =>
     apiRequest<SavePageResult>(pagePath(product, module, page), { method: 'PUT', body: input }),
+  setPageShown: (product: string, module: string, page: string, shown: boolean) =>
+    apiRequest<SavePageResult>(`${pagePath(product, module, page)}/shown`, { method: 'POST', body: { shown } }),
+  getWhatsNew: (product: string, signal?: AbortSignal) => apiRequest<WhatsNewAdminDto>(`/products/${seg(product)}/whats-new`, { signal }),
+  setWhatsNewShown: (product: string, slug: string, shown: boolean) =>
+    apiRequest<WhatsNewAdminDto>(`/products/${seg(product)}/whats-new/${seg(slug)}/shown`, { method: 'PUT', body: { shown } }),
   markDraft: (product: string, module: string, page: string) => apiRequest<SavePageResult>(`${pagePath(product, module, page)}/draft`, { method: 'POST', body: {} }),
   getRevisions: (product: string, module: string, page: string, pageNumber: number, signal?: AbortSignal) =>
     apiRequest<Paged<RevisionSummaryDto>>(`${pagePath(product, module, page)}/revisions${query({ pageNumber, pageSize: 20 })}`, { signal }),

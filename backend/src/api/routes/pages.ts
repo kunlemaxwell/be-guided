@@ -1,5 +1,5 @@
 import { z, type OpenAPIHono } from '@hono/zod-openapi';
-import { pageDetailSchema, pagedSchema, pageQuerySchema, revisionDetailSchema, revisionSummarySchema, savePageInputSchema, savePageResultSchema } from '../../../../admin/shared/api-types';
+import { pageShownInputSchema, pageDetailSchema, pagedSchema, pageQuerySchema, revisionDetailSchema, revisionSummarySchema, savePageInputSchema, savePageResultSchema } from '../../../../admin/shared/api-types';
 import { checkSlug } from '../../domain/slugs';
 import type { AppEnv } from '../context';
 import { errorResponses, ok, okResponse } from '../responses';
@@ -53,6 +53,22 @@ export function registerPages(app: OpenAPIHono<AppEnv>): void {
     async (c) => {
       const p = c.req.valid('param');
       return c.json(ok(await c.get('services').content.markDraft(requestContext(c), p.product, p.module, p.page), 'The page is now a draft.'), 200);
+    },
+  );
+
+  app.openapi(
+    defineRoute('content:write', {
+      method: 'post',
+      path: '/api/v1/pages/{product}/{module}/{page}/shown',
+      tags: ['Pages'],
+      summary: 'Show a page on the public site, or keep it off (never deletes)',
+      request: { params: pageParams, body: { required: true, content: { 'application/json': { schema: pageShownInputSchema } } } },
+      responses: { 200: okResponse(savePageResultSchema, 'Updated'), ...errorResponses(400, 404, 422) },
+    }),
+    async (c) => {
+      const p = c.req.valid('param');
+      const { shown } = c.req.valid('json');
+      return c.json(ok(await c.get('services').content.setPageShown(requestContext(c), p.product, p.module, p.page, shown), shown ? 'The page is shown on the site.' : 'The page is hidden from the site.'), 200);
     },
   );
 

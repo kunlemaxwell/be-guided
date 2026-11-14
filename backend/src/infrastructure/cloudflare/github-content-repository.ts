@@ -264,6 +264,14 @@ export class GitHubContentRepository implements ContentRepository {
     await this.writeFile(this.path('products', product, 'product.json'), this.json(value), message);
   }
 
+  async readWhatsNew(product: string): Promise<unknown | null> {
+    return this.readJson(this.path('products', product, 'whats-new.json'));
+  }
+
+  async writeWhatsNew(product: string, value: Record<string, unknown>, message: string): Promise<void> {
+    await this.writeFile(this.path('products', product, 'whats-new.json'), this.json(value), message);
+  }
+
   async listModules(product: string): Promise<string[]> {
     return this.childDirs(this.path('products', product), 'module.json');
   }

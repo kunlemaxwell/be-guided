@@ -302,6 +302,32 @@ export type SavePageInput = z.infer<typeof savePageInputSchema>;
 export const savePageResultSchema = z.object({ updated: z.string(), siteUrl: z.string(), revisionId: z.string().nullable() });
 export type SavePageResult = z.infer<typeof savePageResultSchema>;
 
+/** Show a page on the public site (published) or keep it off (draft), from the Pages list. */
+export const pageShownInputSchema = z.object({ shown: z.boolean() });
+export type PageShownInput = z.infer<typeof pageShownInputSchema>;
+
+/** What's new, as the admin lists it: every entry of a product, shown or not. */
+export const whatsNewAdminEntrySchema = z.object({
+  slug: z.string(),
+  date: z.string(),
+  title: z.string(),
+  summary: z.string(),
+  kind: z.enum(['new', 'improved', 'fixed']),
+  moduleTitle: z.string(),
+  audience: z.array(z.string()),
+  /** false = kept off the public What's new. */
+  shown: z.boolean(),
+});
+export const whatsNewAdminSchema = z.object({
+  product: z.string(),
+  productName: z.string(),
+  /** Publish automatically: new entries appear at once (true) or stay off until an owner switches them on (false). */
+  autoPublish: z.boolean(),
+  entries: z.array(whatsNewAdminEntrySchema),
+});
+export type WhatsNewAdminDto = z.infer<typeof whatsNewAdminSchema>;
+export const whatsNewShownInputSchema = z.object({ shown: z.boolean() });
+
 export const newProductSchema = z.object({
   slug: slugSchema,
   name: z.string().trim().min(1, 'is required'),
@@ -383,7 +409,7 @@ export type RevisionDetailDto = z.infer<typeof revisionDetailSchema>;
 
 // ── Audit log ──────────────────────────────────────────────────────────────
 
-export const AUDIT_AREAS = ['pages', 'products', 'modules', 'settings', 'people', 'requests', 'uploads', 'publish', 'automation'] as const;
+export const AUDIT_AREAS = ['pages', 'products', 'modules', 'settings', 'people', 'requests', 'uploads', 'publish', 'automation', 'whats-new'] as const;
 export type AuditArea = (typeof AUDIT_AREAS)[number];
 
 export const AUDIT_AREA_LABEL: Record<AuditArea, string> = {
@@ -396,6 +422,7 @@ export const AUDIT_AREA_LABEL: Record<AuditArea, string> = {
   uploads: 'Uploads',
   publish: 'Publish',
   automation: 'Automatic checks and skills',
+  'whats-new': "What's new",
 };
 
 export const auditEntrySchema = z.object({

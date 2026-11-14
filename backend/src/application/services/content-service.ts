@@ -1,4 +1,4 @@
-import { moduleSchema, pageFrontmatterSchema, productSchema, siteSettingsSchema, type SiteSettings } from '../../../../src/types/content';
+import { moduleSchema, pageFrontmatterSchema, productSchema, siteSettingsSchema, whatsNewEntrySchema, whatsNewFileSchema, type SiteSettings } from '../../../../src/types/content';
 import {
   repoLocalPathSchema,
   type GuideTarget,
@@ -17,6 +17,7 @@ import {
   type SavePageInput,
   type SavePageResult,
   type VideoState,
+  type WhatsNewAdminDto,
 } from '../../../../admin/shared/api-types';
 import type { RequestContext } from '../../domain/actor';
 import { authorDisplayName } from '../../domain/authors';
@@ -437,6 +438,120 @@ export class ContentService {
     const revision = this.activity.revision(ctx, { pageId: id, action: 'draft', bodyBefore: original.body, bodyAfter: original.body, fieldChanges, summary: 'Removed from the site (now a draft)' });
     await this.activity.record(ctx, { area: 'pages', action: 'page.draft', target: id, summary: `Removed “${r.data.title}” from the site (now a draft)`, details: { revisionId: revision.id } }, revision);
     return { updated: r.data.updated, siteUrl: this.siteUrlFor(product, module, page), revisionId: revision.id };
+  }
+
+  /** Show a page on the public site (published) or keep it off (draft). Never deletes. */
+  async setPageShown(ctx: RequestContext, product: string, module: string, page: string, shown: boolean): Promise<SavePageResult> {
+    const original = await this.readPageParts(product, module, page);
+    const frontmatter = { ...original.frontmatter, status: shown ? 'published' : 'draft' };
+    const r = pageFrontmatterSchema.safeParse(frontmatter);
+    if (!r.success) throw invalid(r.error, 'page');
+    const id = `${product}/${module}/${page}`;
+    const fieldChanges = diffFields(original.frontmatter, frontmatter);
+    if (fieldChanges.length) {
+      await this.content.writePage(product, module, page, joinPageFile(updateFrontmatter(original.frontmatterSource, frontmatter), original.body), `${shown ? 'Show' : 'Hide'} ${id}`);
+    }
+    const summary = shown ? 'Shown on the site again' : 'Hidden from the site (draft)';
+    const revision = this.activity.revision(ctx, { pageId: id, action: shown ? 'save' : 'draft', bodyBefore: original.body, bodyAfter: original.body, fieldChanges, summary });
+    await this.activity.record(ctx, { area: 'pages', action: shown ? 'page.show' : 'page.hide', target: id, summary: `${shown ? 'Showed' : 'Hid'} “${r.data.title}” ${shown ? 'on' : 'from'} the site`, details: { revisionId: revision.id } }, revision);
+    return { updated: r.data.updated, siteUrl: this.siteUrlFor(product, module, page), revisionId: revision.id };
+  }
+
+  /** "Publish automatically" for a product: on unless product.json switches it off. */
+  async autoPublish(product: string): Promise<{ pages: boolean; whatsNew: boolean }> {
+    const meta = await this.requireProduct(product);
+    const a = (meta as { autoPublish?: { pages?: boolean; whatsNew?: boolean } }).autoPublish ?? {};
+    return { pages: a.pages !== false, whatsNew: a.whatsNew !== false };
+  }
+
+  private async readWhatsNewFile(product: string): Promise<{ entries: Record<string, unknown>[] }> {
+    const raw = await this.content.readWhatsNew(product);
+    const r = whatsNewFileSchema.safeParse(raw ?? { entries: [] });
+    if (!r.success) throw invalid(r.error, "What's new");
+    return { entries: ((raw as { entries?: Record<string, unknown>[] } | null)?.entries ?? []) };
+  }
+
+  async getWhatsNew(product: string): Promise<WhatsNewAdminDto> {
+    const meta = await this.requireProduct(product);
+    const file = await this.readWhatsNewFile(product);
+    const modules = new Map<string, string>();
+    for (const m of await this.content.listModules(product)) {
+      const mj = await this.readModuleJson(product, m);
+      if (mj) modules.set(m, mj.title);
+    }
+    const entries = file.entries
+      .map((e) => whatsNewEntrySchema.parse(e))
+      .map((e) => ({
+        slug: e.slug,
+        date: e.date,
+        title: e.title,
+        summary: e.summary,
+        kind: e.kind,
+        moduleTitle: e.where ?? modules.get(e.module) ?? e.module,
+        audience: e.audience,
+        shown: e.hidden !== true,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
+    return { product, productName: meta.name, autoPublish: (await this.autoPublish(product)).whatsNew, entries };
+  }
+
+  /** Switch one What's new entry on or off the public page. */
+  async setWhatsNewShown(ctx: RequestContext, product: string, slug: string, shown: boolean): Promise<WhatsNewAdminDto> {
+    await this.requireProduct(product);
+    const file = await this.readWhatsNewFile(product);
+    const entry = file.entries.find((e) => e.slug === slug);
+    if (!entry) throw new AppError('NOT_FOUND', `There is no What's new entry "${slug}" in ${product}.`);
+    if ((entry.hidden !== true) !== shown) {
+      if (shown) delete entry.hidden;
+      else entry.hidden = true;
+      await this.content.writeWhatsNew(product, { ...file, entries: file.entries }, `${shown ? 'Show' : 'Hide'} What's new entry ${product}/${slug}`);
+    }
+    await this.activity.record(ctx, {
+      area: 'whats-new',
+      action: shown ? 'whatsnew.show' : 'whatsnew.hide',
+      target: `${product}/${slug}`,
+      summary: `${shown ? 'Showed' : 'Hid'} “${str(entry.title)}” ${shown ? 'on' : 'from'} What's new`,
+    });
+    return this.getWhatsNew(product);
+  }
+
+  /**
+   * Add or update What's new entries (from a check or the connector). Each is validated with the site's own schema.
+   * New entries are shown at once, unless the product has "publish automatically" off for What's new: then they are
+   * saved switched off and wait for an owner to switch them on. An entry that already exists keeps its shown state.
+   */
+  async saveWhatsNewEntries(ctx: RequestContext, product: string, entries: Record<string, unknown>[]): Promise<{ added: string[]; updated: string[]; waiting: boolean }> {
+    await this.requireProduct(product);
+    const auto = (await this.autoPublish(product)).whatsNew;
+    const file = await this.readWhatsNewFile(product);
+    const added: string[] = [];
+    const updated: string[] = [];
+    for (const input of entries) {
+      const parsed = whatsNewEntrySchema.safeParse({ ...input, hidden: undefined });
+      if (!parsed.success) throw invalid(parsed.error, "What's new entry");
+      const e = parsed.data;
+      if (!(await this.moduleExists(product, e.module))) throw new AppError('NOT_FOUND', `There is no module "${e.module}" in ${product}.`);
+      const next: Record<string, unknown> = { ...e };
+      delete next.hidden;
+      const at = file.entries.findIndex((x) => x.slug === e.slug);
+      if (at >= 0) {
+        if (file.entries[at]!.hidden === true) next.hidden = true;
+        file.entries[at] = next;
+        updated.push(e.slug);
+      } else {
+        if (!auto) next.hidden = true;
+        file.entries.push(next);
+        added.push(e.slug);
+      }
+    }
+    await this.content.writeWhatsNew(product, { ...file, entries: file.entries }, `Update What's new for ${product}`);
+    await this.activity.record(ctx, {
+      area: 'whats-new',
+      action: 'whatsnew.save',
+      target: product,
+      summary: `Saved What's new for ${product}: ${added.length} added${auto || added.length === 0 ? '' : ' (waiting to be switched on)'}, ${updated.length} updated`,
+    });
+    return { added, updated, waiting: !auto && added.length > 0 };
   }
 
   async createPage(ctx: RequestContext, product: string, module: string, input: NewPageInput): Promise<PageSummary> {

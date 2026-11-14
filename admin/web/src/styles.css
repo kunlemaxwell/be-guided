@@ -2739,3 +2739,55 @@ legend {
 .wire__card { border: 1px solid #c9ccd5; border-radius: 4px; padding: 4px; background: #fff; }
 .wire__card--tall { flex: 1; display: flex !important; flex-direction: column-reverse; gap: 4px; }
 .wire__card--tall .wire__shot { flex: 1; }
+
+/* ── Show on site / What's new ───────────────────────────── */
+.shown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.page-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.wn-admin {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.wn-admin__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 20px;
+  border-top: 1px solid var(--border);
+}
+.wn-admin__row:first-child {
+  border-top: 0;
+}
+.wn-admin__row--off .wn-admin__title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.wn-admin__main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.wn-admin__title {
+  font-weight: 620;
+}
+.wn-admin__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}

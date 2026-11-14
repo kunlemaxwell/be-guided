@@ -10,6 +10,8 @@ import {
   productJsonSchema,
   UPLOAD_KINDS,
   uploadResultSchema,
+  whatsNewAdminSchema,
+  whatsNewShownInputSchema,
 } from '../../../../admin/shared/api-types';
 import { AppError } from '../../domain/errors';
 import type { AppEnv } from '../context';
@@ -22,7 +24,37 @@ const uploadForm = z.object({
   kind: z.enum(UPLOAD_KINDS).openapi({ description: 'image → module images/ folder; video → module media/ folder' }),
 });
 
+const whatsNewParams = z.object({ product: z.string(), slug: z.string() });
+
 export function registerLibrary(app: OpenAPIHono<AppEnv>): void {
+  app.openapi(
+    defineRoute('content:read', {
+      method: 'get',
+      path: '/api/v1/products/{product}/whats-new',
+      tags: ['Library'],
+      summary: "A product's What's new entries, shown or not, and its publish-automatically setting",
+      request: { params: productParam },
+      responses: { 200: okResponse(whatsNewAdminSchema, "The product's What's new"), ...errorResponses(400, 404) },
+    }),
+    async (c) => c.json(ok(await c.get('services').content.getWhatsNew(c.req.valid('param').product)), 200),
+  );
+
+  app.openapi(
+    defineRoute('content:write', {
+      method: 'put',
+      path: '/api/v1/products/{product}/whats-new/{slug}/shown',
+      tags: ['Library'],
+      summary: "Switch one What's new entry on or off the public page",
+      request: { params: whatsNewParams, body: { required: true, content: { 'application/json': { schema: whatsNewShownInputSchema } } } },
+      responses: { 200: okResponse(whatsNewAdminSchema, 'Updated'), ...errorResponses(400, 404, 422) },
+    }),
+    async (c) => {
+      const p = c.req.valid('param');
+      const { shown } = c.req.valid('json');
+      return c.json(ok(await c.get('services').content.setWhatsNewShown(requestContext(c), p.product, p.slug, shown), shown ? 'Shown on What\'s new.' : 'Hidden from What\'s new.'), 200);
+    },
+  );
+
   app.openapi(
     defineRoute('content:read', {
       method: 'get',

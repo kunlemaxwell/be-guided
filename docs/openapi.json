@@ -2229,6 +2229,1014 @@
         }
       }
     },
+    "/api/v1/products/{product}/whats-new": {
+      "get": {
+        "tags": [
+          "Library"
+        ],
+        "summary": "A product's What's new entries, shown or not, and its publish-automatically setting",
+        "security": [
+          {
+            "cloudflareAccess": []
+          }
+        ],
+        "x-policy": "content:read",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "acme-books"
+            },
+            "required": true,
+            "name": "product",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The product's What's new",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "type": "string"
+                        },
+                        "productName": {
+                          "type": "string"
+                        },
+                        "autoPublish": {
+                          "type": "boolean"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "slug": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "summary": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "new",
+                                  "improved",
+                                  "fixed"
+                                ]
+                              },
+                              "moduleTitle": {
+                                "type": "string"
+                              },
+                              "audience": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "shown": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "slug",
+                              "date",
+                              "title",
+                              "summary",
+                              "kind",
+                              "moduleTitle",
+                              "audience",
+                              "shown"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "product",
+                        "productName",
+                        "autoPublish",
+                        "entries"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad path (BAD_PATH)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid identity (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this, unknown person, or wrong origin (FORBIDDEN, FORBIDDEN_ORIGIN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure (SERVER_ERROR, PUBLISH_FAILED) — never includes internals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/products/{product}/whats-new/{slug}/shown": {
+      "put": {
+        "tags": [
+          "Library"
+        ],
+        "summary": "Switch one What's new entry on or off the public page",
+        "security": [
+          {
+            "cloudflareAccess": []
+          }
+        ],
+        "x-policy": "content:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "product",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "shown": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "shown"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "product": {
+                          "type": "string"
+                        },
+                        "productName": {
+                          "type": "string"
+                        },
+                        "autoPublish": {
+                          "type": "boolean"
+                        },
+                        "entries": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "slug": {
+                                "type": "string"
+                              },
+                              "date": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "summary": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "new",
+                                  "improved",
+                                  "fixed"
+                                ]
+                              },
+                              "moduleTitle": {
+                                "type": "string"
+                              },
+                              "audience": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "shown": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "slug",
+                              "date",
+                              "title",
+                              "summary",
+                              "kind",
+                              "moduleTitle",
+                              "audience",
+                              "shown"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "product",
+                        "productName",
+                        "autoPublish",
+                        "entries"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad path (BAD_PATH)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid identity (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this, unknown person, or wrong origin (FORBIDDEN, FORBIDDEN_ORIGIN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed (INVALID) — see issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure (SERVER_ERROR, PUBLISH_FAILED) — never includes internals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/library": {
       "get": {
         "tags": [
@@ -8024,6 +9032,517 @@
         }
       }
     },
+    "/api/v1/pages/{product}/{module}/{page}/shown": {
+      "post": {
+        "tags": [
+          "Pages"
+        ],
+        "summary": "Show a page on the public site, or keep it off (never deletes)",
+        "security": [
+          {
+            "cloudflareAccess": []
+          }
+        ],
+        "x-policy": "content:write",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "acme-books"
+            },
+            "required": true,
+            "name": "product",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "sales"
+            },
+            "required": true,
+            "name": "module",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "create-an-invoice"
+            },
+            "required": true,
+            "name": "page",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "shown": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "shown"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "updated": {
+                          "type": "string"
+                        },
+                        "siteUrl": {
+                          "type": "string"
+                        },
+                        "revisionId": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "updated",
+                        "siteUrl",
+                        "revisionId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad path (BAD_PATH)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No or invalid identity (UNAUTHENTICATED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role does not allow this, unknown person, or wrong origin (FORBIDDEN, FORBIDDEN_ORIGIN)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found (NOT_FOUND)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed (INVALID) — see issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure (SERVER_ERROR, PUBLISH_FAILED) — never includes internals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BAD_PATH",
+                        "BAD_REQUEST",
+                        "UNAUTHENTICATED",
+                        "FORBIDDEN",
+                        "FORBIDDEN_ORIGIN",
+                        "NOT_FOUND",
+                        "NOT_ALLOWED",
+                        "ALREADY_EXISTS",
+                        "CONFLICT",
+                        "NOTHING_TO_PUBLISH",
+                        "FILE_TOO_LARGE",
+                        "UNSUPPORTED_FILE",
+                        "INVALID",
+                        "RATE_LIMITED",
+                        "SERVER_ERROR",
+                        "PUBLISH_FAILED",
+                        "NOT_SUPPORTED",
+                        "NOT_CONFIGURED"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "field",
+                          "message"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pages/{product}/{module}/{page}/revisions": {
       "get": {
         "tags": [
@@ -11104,7 +12623,8 @@
                 "requests",
                 "uploads",
                 "publish",
-                "automation"
+                "automation",
+                "whats-new"
               ]
             },
             "required": false,
@@ -11197,7 +12717,8 @@
                                   "requests",
                                   "uploads",
                                   "publish",
-                                  "automation"
+                                  "automation",
+                                  "whats-new"
                                 ]
                               },
                               "action": {
@@ -11599,7 +13120,8 @@
                             "requests",
                             "uploads",
                             "publish",
-                            "automation"
+                            "automation",
+                            "whats-new"
                           ]
                         },
                         "action": {
