@@ -1,0 +1,41 @@
+{
+  "name": "Learn OTG",
+  "summary": "Learn anything on the go: ask a question for a visual lesson, or build a whole course from a topic or your own material.",
+  "visibility": "public",
+  "status": "available",
+  "order": 2,
+  "editorApproval": false,
+  "source": {
+    "repos": [
+      {
+        "url": "kunlemaxwell/learn-otg",
+        "branch": "main",
+        "paths": [
+          "src",
+          "scripts"
+        ]
+      }
+    ]
+  },
+  "hero": {
+    "images": [
+      "lessons/images/lesson.webp",
+      "courses/images/course-page.webp"
+    ],
+    "chips": [
+      {
+        "icon": "play",
+        "text": "Visual lessons"
+      },
+      {
+        "icon": "layers",
+        "text": "Courses on the fly"
+      },
+      {
+        "icon": "check",
+        "text": "Quizzes and certificates"
+      }
+    ],
+    "label": "Learn OTG"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "journeys": [
+    {
+      "slug": "first-time",
+      "title": "First-time learner",
+      "group": "Getting started",
+      "summary": "Install Learn OTG, set up your profile and take your first lesson.",
+      "inferred": true,
+      "order": 10,
+      "steps": [
+        {
+          "page": "getting-started/install-learn-otg"
+        },
+        {
+          "page": "getting-started/set-up-your-profile"
+        },
+        {
+          "page": "getting-started/find-your-way-around"
+        },
+        {
+          "page": "lessons/ask-for-a-lesson",
+          "why": "Ask anything and learn from a visual lesson."
+        }
+      ]
+    },
+    {
+      "slug": "course-learner",
+      "title": "Course learner",
+      "group": "Learning",
+      "summary": "Build a course from a topic or your own material and finish it with a certificate.",
+      "inferred": true,
+      "order": 20,
+      "steps": [
+        {
+          "page": "courses/build-a-course"
+        },
+        {
+          "page": "courses/follow-a-course"
+        },
+        {
+          "page": "courses/ask-the-lesson-tutor"
+        },
+        {
+          "page": "lessons/check-what-you-learned"
+        },
+        {
+          "page": "progress/evidence-and-certificates",
+          "why": "Show what you learned and earn the certificate."
+        }
+      ]
+    },
+    {
+      "slug": "track-progress",
+      "title": "Tracking progress",
+      "group": "Progress",
+      "summary": "Keep your streak, save notes and see what Learn OTG remembers about you.",
+      "inferred": true,
+      "order": 30,
+      "steps": [
+        {
+          "page": "progress/journey-and-points"
+        },
+        {
+          "page": "progress/notebooks-and-memory"
+        },
+        {
+          "page": "lessons/reopen-chats"
+        }
+      ]
+    }
+  ]
+}

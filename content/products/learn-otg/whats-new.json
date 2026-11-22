@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "slug": "first-release",
+      "date": "2026-11-22",
+      "title": "Learn OTG is out",
+      "summary": "Ask a question for a visual lesson, or build a whole course from a topic, files, websites or YouTube.",
+      "detail": "The first public release has lessons on a canvas, courses written page by page, quizzes, a tutor for every lesson, notebooks, memory, a journey with points, completion evidence and certificates. It runs on your computer with free Groq or NVIDIA keys, or in demo mode.",
+      "module": "getting-started",
+      "where": "Learn",
+      "audience": [
+        "Everyone"
+      ],
+      "kind": "new"
+    }
+  ]
+}
