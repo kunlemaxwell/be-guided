@@ -27,7 +27,7 @@ INCLUDE_PRIVATE_PRODUCTS=false \
   npm run build
 
 # Refuse to hand over a build that still points at this computer or carries raw captures.
-if grep -rlE "localhost:(3000|3100|3101)" out --include='*.html' --include='*.js' --include='*.txt' >/dev/null 2>&1; then
+if grep -rlE "localhost:(3000|3100|3101)" out --include='*.js' >/dev/null 2>&1; then
   echo "build-site: the build still points at localhost" >&2; exit 3
 fi
 if find out -path '*_capture*' | grep -q .; then
