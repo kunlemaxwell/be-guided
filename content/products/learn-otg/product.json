@@ -22,6 +22,10 @@
       "lessons/images/lesson.webp",
       "courses/images/course-page.webp"
     ],
+    "video": {
+      "src": "getting-started/media/learn-otg-launch.mp4",
+      "poster": "getting-started/media/learn-otg-launch-poster.webp"
+    },
     "chips": [
       {
         "icon": "play",
