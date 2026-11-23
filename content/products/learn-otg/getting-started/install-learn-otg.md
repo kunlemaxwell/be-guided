@@ -51,4 +51,4 @@ Run the setup again any time to add or change keys. To try it on your phone on t
 
 ## What happens next
 
-The first time you open Learn OTG, a short welcome asks a few questions about you. See [Set up your profile](set-up-your-profile).
+The first time you open Learn OTG, a short welcome asks a few questions about you. See [Set up your profile](guide:getting-started/set-up-your-profile).

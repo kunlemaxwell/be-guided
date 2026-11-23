@@ -12,7 +12,6 @@ Select **Settings** in the menu. The sections are on the left.
 
 ![The Settings page](images/settings.webp)
 
-:::legend
 - **Profile**: your name, role and the areas you want to improve.
 - **Learning style**: more visuals, a balanced mix or more explanation.
 - **Course defaults**: the size, quizzes and certificate used for new courses.
@@ -20,7 +19,6 @@ Select **Settings** in the menu. The sections are on the left.
 - **Memory & suggestions**: the same switches as the Memory page.
 - **Lessons & chat**, **Appearance** and **Advanced**: how lessons and the chat behave and look.
 - **Your data**: see how much is saved in this browser, select **Download a backup**, or **Clear chat history**.
-:::
 
 ## Choose a model
 
