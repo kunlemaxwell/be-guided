@@ -1,6 +1,6 @@
 ---
 name: be-guided-screenshots
-description: Take and mark up screenshots for Be Guided guide pages in the house look (sharp 2x, orange numbered boxes that match the step's legend, optional fade around them). Use whenever you add or retake a screenshot for a Be Guided guide, together with the be-guided connector.
+description: Take and mark up screenshots for Be Guided guide pages in the house look (sharp 2x, orange outlines, small arrows and numbers that match the step's legend, never filled or shaded). Use whenever you add or retake a screenshot for a Be Guided guide, together with the be-guided connector.
 ---
 
 # Be Guided screenshots
@@ -46,7 +46,6 @@ If the screenshot was taken scrolled, use the values at the moment of the screen
   "output": "out/invoice-new-button.webp",
   "scale": 2,
   "crop": { "x": 0, "y": 60, "w": 1440, "h": 520 },
-  "dim": false,
   "marks": [
     { "n": 1, "box": { "x": 72, "y": 268, "w": 184, "h": 32 }, "pad": 3, "badge": "r" },
     { "n": 2, "box": { "x": 1249, "y": 178, "w": 159, "h": 34 }, "pad": 3, "badge": "l" }
@@ -55,7 +54,7 @@ If the screenshot was taken scrolled, use the values at the moment of the screen
 ```
 
 - `crop` (optional): the part of the screenshot to keep, CSS px.
-- `dim: true` fades everything outside the boxes. Use it for busy screens with one or two marks.
+- Never fade or shade the screenshot: `dim` is ignored. Marks are outlines, small arrows and numbers only, never filled.
 - `marks`: `n` is the legend number (leave it out for a frame without a number). `pad` is the space around the box (default 6, use 2 to 3 when boxes touch). `badge` is where the number sits: `tr` (default), `tl`, `l`, `r`. Use `l`/`r` for items stacked in a column so numbers never overlap.
 
 ## 4. Render

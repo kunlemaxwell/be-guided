@@ -10,7 +10,6 @@ import { heroChips, productHero } from '@/lib/content/hero';
 import { ProductCollage } from '@/components/hero/ProductCollage';
 import { ProductLinkButton } from '@/components/ProductLinkButton';
 import { getJourneys } from '@/lib/content/journeys';
-import { HeroSearchButton } from '@/components/search/HeroSearchButton';
 import { whatsNewHref } from '@/lib/whats-new/href';
 import { JourneyPicker } from '@/components/journeys/JourneyPicker';
 
@@ -50,14 +49,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <div className="hero__inner">
                 <h1 className="hero__title">{product.name}</h1>
                 <p className="hero__lead">{product.summary}</p>
-                <HeroSearchButton />
                 <div className="hero__actions">
                   {journeys.length > 0 ? <Link className="btn btn--primary" href={`/${product.slug}/journeys/`}>Guide me</Link> : null}
                   <Link className="btn" href={whatsNewHref(product.slug)}>What&apos;s new</Link>
-                  <Link className="btn" href={`/${product.slug}/configuration-center/`}>
-                    Configuration center →
-                  </Link>
-                  <ProductLinkButton slug={product.slug} name={product.name} />
                 </div>
               </div>
               <ProductCollage hero={hero} productName={product.name} chips={chips} />
@@ -70,6 +64,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             productName={product.name}
             journeys={journeys.map((j) => ({ slug: j.slug, title: j.title, summary: j.summary, group: j.group, inferred: j.inferred, steps: j.steps }))}
           />
+          <p className="product-tools">
+            <Link href={`/${product.slug}/configuration-center/`}>Configuration center: what to set up, in order →</Link>
+            <ProductLinkButton slug={product.slug} name={product.name} />
+          </p>
           {moduleGroups(product).map((g) => (
             <section key={g.slug} className="section section--tight" aria-labelledby={`group-${g.slug}`}>
               <div className="group-head">

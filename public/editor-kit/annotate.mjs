@@ -1,6 +1,6 @@
-// Be Guided editor kit: turns a raw app screenshot plus a small
-// annotation file into the marked-up image used in a guide page (orange
-// numbered boxes, optional fade around them, sharp 2x WebP).
+// Be Guided editor kit: turns a raw app screenshot plus a small annotation
+// file into the marked-up image used in a guide page (orange outlines, small
+// arrows and numbers, never filled or shaded; sharp 2x WebP).
 // Needs Node 18+ and the "sharp" package (install.sh puts it next to this file).
 //
 //   node annotate.mjs <spec.json> [<spec.json> ...]
@@ -11,15 +11,18 @@
 //   "output": "invoice-details.webp",       // written next to the spec
 //   "scale": 2,                             // screenshot pixels per CSS px
 //   "crop": { "x": 300, "y": 140, "w": 1260, "h": 240 },   // CSS px, optional
-//   "dim": true,                            // fade everything outside the boxes
+//   "dim": false,                           // ignored: the rest of the screenshot is never faded (outlines only)
+//   "blur": [{ "x": 540, "y": 200, "w": 120, "h": 300 }],  // hide real names/amounts
 //   "marks": [                              // CSS px of the full screenshot
 //     { "n": 1, "box": { "x": 337, "y": 212, "w": 242, "h": 60 } },
 //     { "box": { ... } },                   // box without a number = highlight only
 //     { "n": 3, "pad": 0, "box": { ... } },   // pad: space around the box (default 6)
 //     { "n": 4, "badge": "l", "box": { ... } }, // badge: tr (default) | tl | l | r — where the number sits
-//     { "n": 5, "outline": false, "badge": "l", "box": { ... } } // number only, no box
-//   Boxes are always outlines, never filled. Mix styles: box + number, number only, or no marks.
+//     { "n": 5, "style": "number", "box": { ... } }, // number only: no outline, the number sits beside the spot
+//     { "n": 6, "arrow": "l", "box": { ... } },   // outline plus a small arrow that comes from the left (l | r | t | b); the number sits at the arrow's tail
+//     { "n": 7, "style": "arrow", "arrow": "t", "box": { ... } } // arrow only: no outline, a small arrow points at the spot
 //   ]
+// Marks are never filled or shaded: outlines, small arrows and numbers only.
 // }
 //
 // Because the markings live in this file, a retaken screenshot gets them
@@ -44,19 +47,30 @@ async function render(specFile) {
   const k = Math.min(scale, (MAX_WIDTH / crop.w));
   const W = Math.round(crop.w * k);
   const H = Math.round(crop.h * k);
-  const base = await src
+  let base = await src
     .extract({ left: Math.round(crop.x * scale), top: Math.round(crop.y * scale), width: Math.round(crop.w * scale), height: Math.round(crop.h * scale) })
     .resize(W, H)
     .toBuffer();
 
-  // No blurring: guide screens come from the test environment (house rule).
+  // "blur": areas holding real names, amounts or ids (CSS px of the full screenshot).
+  for (const b of spec.blur ?? []) {
+    const left = Math.max(0, Math.round((b.x - crop.x) * k));
+    const top = Math.max(0, Math.round((b.y - crop.y) * k));
+    const width = Math.min(W - left, Math.round(b.w * k));
+    const height = Math.min(H - top, Math.round(b.h * k));
+    if (width <= 0 || height <= 0) continue;
+    const patch = await sharp(base).extract({ left, top, width, height }).blur(9 * k).toBuffer();
+    base = await sharp(base).composite([{ input: patch, left, top }]).toBuffer();
+  }
 
   const boxes = (spec.marks ?? []).map((m) => {
     const pad = m.pad ?? PAD; // tight pads for elements that touch each other
     return {
       n: m.n,
-      badge: m.badge ?? 'tr',
-      outline: m.outline !== false,
+      // 'box' (default): outline plus number. 'number': the number only, no box.
+      style: m.style ?? 'box',
+      badge: m.badge ?? (m.style === 'number' ? 'l' : 'tr'),
+      arrow: ['l', 'r', 't', 'b'].includes(m.arrow) ? m.arrow : (m.style === 'arrow' ? 't' : undefined),
       x: (m.box.x - crop.x - pad) * k,
       y: (m.box.y - crop.y - pad) * k,
       w: (m.box.w + pad * 2) * k,
@@ -69,13 +83,30 @@ async function render(specFile) {
   const badge = 13 * k; // badge radius
   const font = 14 * k;
 
-  const holes = boxes.map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="black"/>`).join('');
-  const dim = spec.dim && boxes.length
-    ? `<mask id="m"><rect width="${W}" height="${H}" fill="white"/>${holes}</mask><rect width="${W}" height="${H}" fill="rgba(15,23,42,0.38)" mask="url(#m)"/>`
-    : '';
+  const dim = ''; // Never fade the rest of the screenshot: Maxwell wants outlines only, so `dim` in a spec is ignored.
   const frames = boxes
-    .filter((b) => b.outline)
+    .filter((b) => b.style !== 'number' && b.style !== 'arrow')
     .map((b) => `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="none" stroke="${ACCENT}" stroke-width="${sw}"/>`)
+    .join('');
+  // Small arrows: a short line ending in a head at the edge of the spot, coming from the chosen side.
+  const len = 34 * k; // arrow length
+  const head = 8 * k; // arrow head size
+  const tails = new Map();
+  const arrows = boxes
+    .filter((b) => b.arrow)
+    .map((b) => {
+      const cx = b.x + b.w / 2;
+      const cy = b.y + b.h / 2;
+      const [dx, dy, hx, hy] = { l: [-1, 0, b.x, cy], r: [1, 0, b.x + b.w, cy], t: [0, -1, cx, b.y], b: [0, 1, cx, b.y + b.h] }[b.arrow];
+      const tx = hx + dx * len;
+      const ty = hy + dy * len;
+      tails.set(b, [tx, ty]);
+      const px = -dy; // perpendicular, for the head's wings
+      const py = dx;
+      const wing = (s) => `${hx + dx * head + px * s * head * 0.7},${hy + dy * head + py * s * head * 0.7}`;
+      return `<line x1="${tx}" y1="${ty}" x2="${hx}" y2="${hy}" stroke="${ACCENT}" stroke-width="${sw}" stroke-linecap="round"/>` +
+        `<polygon points="${hx},${hy} ${wing(1)} ${wing(-1)}" fill="${ACCENT}"/>`;
+    })
     .join('');
   const badges = boxes
     .filter((b) => b.n !== undefined)
@@ -88,14 +119,15 @@ async function render(specFile) {
         l: [b.x - badge - 4 * k, b.y + b.h / 2],
         r: [b.x + b.w + badge + 4 * k, b.y + b.h / 2],
       }[b.badge] ?? [b.x + b.w, b.y];
-      const cx = Math.max(badge + 2, Math.min(W - badge - 2, pos[0]));
-      const cy = Math.max(badge + 2, Math.min(H - badge - 2, pos[1]));
+      const at = tails.get(b) ?? pos; // with an arrow, the number sits at its tail
+      const cx = Math.max(badge + 2, Math.min(W - badge - 2, at[0]));
+      const cy = Math.max(badge + 2, Math.min(H - badge - 2, at[1]));
       return `<circle cx="${cx}" cy="${cy}" r="${badge}" fill="${ACCENT}" stroke="#fff" stroke-width="${sw}"/>` +
         `<text x="${cx}" y="${cy}" dy="0.35em" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="${font}" fill="#fff">${b.n}</text>`;
     })
     .join('');
 
-  const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs/>${dim}${frames}${badges}</svg>`);
+  const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs/>${dim}${frames}${arrows}${badges}</svg>`);
   const out = path.resolve(dir, spec.output);
   await sharp(base).composite([{ input: svg }]).webp({ quality: 88, effort: 5 }).toFile(out);
   // Record the on-screen width (CSS px) so the page shows close-ups at

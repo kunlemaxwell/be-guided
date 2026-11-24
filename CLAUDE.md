@@ -18,3 +18,9 @@ See [AGENTS.md](AGENTS.md).
 - **Publish automatically (default on),** two switches per product in Admin › Products, stored as product.json `autoPublish: { pages, whatsNew }` (absent = both on). Pages off: every `save_page` waits for an owner in Updates & requests, even from an owner's key. What's new off: `save_whats_new` saves new entries with `hidden: true`; an owner ticks them in What's new to publish. Existing entries keep their state when updated. `list_products` shows both settings.
 - **Connector tool `save_whats_new`** (product, entries[]) adds or updates entries, validated with the site's schema; the writing standard and update checks tell the AI to use it after documenting a new feature. The audit log has an area "What's new".
 - Tests: `backend/tests/contract/publish-settings.contract.test.ts`, `tests/site/whats-new.test.ts`.
+
+## Updating from code, and screenshot marks (Maxwell, 24 Nov 2026)
+
+- **Updating a guide from the app's code is always measured from each page's own updated date, never from the last commit.** This is in the code: the check job's `baseline` (`baselineFor` in `backend/src/application/services/automation-service.ts`) lists every page and its date, the check steps say so, and the connector's writing standard (`WRITING_STANDARD`) says it for any update request. Pull the code first (prune, then ff-only). Open findings carry forward. Nobody should need to repeat this.
+- **Marks on screenshots: outlines, small arrows and numbers only. Never shaded, filled or faded.** `scripts/annotate.mjs` (and the kit copy `public/editor-kit/annotate.mjs`) draw them: outline + number, outline + arrow (`"arrow": "l|r|t|b"`), arrow only (`"style": "arrow"`), number only (`"style": "number"`), or none.
+- **Product page:** the hero has Guide me and What's new, two floating labels at most, and no search box (search is in the header). Configuration center and Copy link sit under the hero.

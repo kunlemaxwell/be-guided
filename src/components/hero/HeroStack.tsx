@@ -64,7 +64,7 @@ export function HeroStack({ slides, seconds, chips }: { slides: StackSlide[]; se
           );
         })}
       </div>
-      {chips.slice(0, 3).map((c, i) => (
+      {chips.slice(0, 2).map((c, i) => (
         <span key={c.text} className={`hero-chip hero-chip--${'abc'[i]}`} aria-hidden="true">
           <b><HeroIcon name={c.icon} size={14} /></b>
           {c.text}

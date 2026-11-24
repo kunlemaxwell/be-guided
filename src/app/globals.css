@@ -901,7 +901,7 @@ html[data-theme='warm'] .module-grid--compact { grid-template-columns: repeat(au
 /* User journeys: picker, path, map, article bar. No coloured edge stripes on cards. */
 .journeys { margin: 24px 0 8px; }
 .journeys__card, .journeys__bar, .journeys__path { background: var(--bg-elev, var(--bg)); border: var(--line-w, 1px) solid var(--border); border-radius: var(--radius, 12px); padding: 18px 20px; }
-.journeys__path { margin-top: 12px; }
+.journeys__path { margin-top: 32px; }
 .journeys__title { margin: 0 0 4px; font-size: 20px; }
 .journeys__lead { margin: 0 0 14px; color: var(--muted); max-width: 68ch; }
 .journeys__groups { display: grid; gap: 12px; }
@@ -912,10 +912,10 @@ html[data-theme='warm'] .module-grid--compact { grid-template-columns: repeat(au
 .journey-chip[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .journey-chip__mark { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1.5px solid currentColor; border-radius: 4px; font-size: 11px; line-height: 1; opacity: .8; }
 .journeys__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.journeys__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 16px; }
+.journeys__bar { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px 20px; }
 .journeys__bar-label { margin: 0; font-size: 14px; font-weight: 500; color: var(--muted); }
 .journeys__bar-value { font-weight: 600; }
-.journeys__bar-actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.journeys__bar-actions { margin: 10px 0 0; display: flex; gap: 8px; flex-wrap: wrap; }
 .journeys__path-title { margin: 0 0 12px; font-size: 16px; }
 .journeys__more { display: inline-block; margin-top: 10px; margin-left: 4px; }
 .journey-steps { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
@@ -1032,3 +1032,6 @@ html[data-theme='warm'] .module-grid--compact { grid-template-columns: repeat(au
 /* "Everyone" is always the first choice when picking a user journey */
 .journeys__everyone { margin-bottom: 14px; }
 .journey-chip--everyone { font-weight: 600; }
+
+/* Product page: links that used to sit in the hero */
+.product-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin: 20px 0 4px; font-size: 14px; }

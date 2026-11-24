@@ -67,9 +67,15 @@ In the menu, select **Sales**, then **Invoices**.
 - Quote buttons and fields exactly as the app shows them, in **bold**.
 - Use only sample data that is clearly fictional (e.g. "Sample Traders Ltd", billing@example.com).
 
+## Updating a guide from the app's code (any request: "update the guide", a queued check, or a one-off)
+- Never look only at the latest commits. Compare each page with everything that changed in the code AFTER that page's own updated date (read it with read_page or the page list; git log --since=<that date> on the app's paths, matched by the page's appRoutes and topic). Start from the oldest page date. A page updated on 4 Nov is compared with everything from 4 Nov onwards, even if the guide was edited again on 12 Nov.
+- Pull the app's code first (git remote prune origin, then git pull --ff-only) so you compare against the latest.
+- Findings from earlier checks that nobody applied yet stay open until you have checked them against the current code.
+- After applying, add What's new entries (save_whats_new), dated the day the feature reached production, never a staging-only feature.
+
 ## Screenshots (Text + screenshots, Everything)
 - Real screens only, captured sharp (2x), PNG or WebP, the area of the task (not the whole desktop).
-- Mark the parts the step talks about with numbered orange markers, matching the :::legend list. Use the house tool for this, never your own drawing:
+- Mark the parts the step talks about with orange outlines and numbers, matching the :::legend list. Small arrows may be mixed in, and some pictures can use numbers only or no marks. Never shade, fill or fade anything: outlines, small arrows and numbers only. Use the house tool for this, never your own drawing:
   - If you have the skill "be-guided-screenshots", follow it.
   - If not, install it once: curl -fsSL {{SITE_URL}}/editor-kit/install.sh | BE_GUIDED_KIT_URL={{SITE_URL}}/editor-kit bash (needs Node 18+), then read ~/.claude/skills/be-guided-screenshots/SKILL.md (Codex: ~/.codex/skills/...) and follow it. You can also download {{SITE_URL}}/editor-kit/annotate.mjs and its instructions {{SITE_URL}}/editor-kit/SKILL.md directly.
 - Do NOT blur anything. Screens come from the test environment, so all names, emails, numbers and amounts are test data and stay readable.

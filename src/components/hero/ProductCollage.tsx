@@ -45,7 +45,7 @@ export function ProductCollage({ hero, productName, chips }: { hero: ProductHero
       </div>
       {video
         ? null
-        : chips.slice(0, 3).map((c, i) => (
+        : chips.slice(0, 2).map((c, i) => (
             <span key={c.text} className={`hero-chip hero-chip--${'abc'[i]}`}>
               <b><HeroIcon name={c.icon} size={14} /></b>
               {c.text}
